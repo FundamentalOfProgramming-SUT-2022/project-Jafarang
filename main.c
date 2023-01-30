@@ -24,6 +24,7 @@ void file_already_existed();
 int go_to_address(char path[]);
 int create_file();
 int insert();
+int cat();
 /////////////////////////////////////////MAIN
 int main()
 {
@@ -31,7 +32,8 @@ int main()
     //create_file();
     //get_str(command);
     //printf("%s",command);
-    insert();
+    //insert();
+    cat();
     return 0;
 }
 ////////////////////////////////////////
@@ -135,7 +137,7 @@ int find_position(int line,int pos,char str[])
     while(cur_line<line)
     {
         index++;
-        if(fscanf(fptr,"%c",&c)==0)
+        if(fscanf(fptr,"%c",&c)==-1)
         {
             fclose(fptr);
             return ERROR;
@@ -149,7 +151,7 @@ int find_position(int line,int pos,char str[])
     {
         index++;
         cur_pos++;
-        if(fscanf(fptr,"%c",&c)==0 || c=='\n')
+        if(fscanf(fptr,"%c",&c)==-1 || c=='\n')
         {
             fclose(fptr);
             return ERROR;
@@ -384,7 +386,7 @@ int insert()
         }
         if(strcmp(flag,"--pos")==0)
         {
-            if(fscanf(stdin,"%d:%d",&line,&pos)==0)
+            if(fscanf(stdin,"%d:%d",&line,&pos)==-1)
                 return error(*invalid_input);
             if(pos_check!=0)
                 return error(*invalid_input);
@@ -400,7 +402,7 @@ int insert()
     fseek(fptr,position,SEEK_SET);
     for(int i=0;i<10000;i++)
     {
-        if(fscanf(fptr,"%c",&end_str[i])==0)
+        if(fscanf(fptr,"%c",&end_str[i])==-1)
         {
             end_str[i]='\0';
             break;
@@ -414,6 +416,32 @@ int insert()
     fprintf(fptr,"%s",input_str);
     fprintf(fptr,"%s",end_str);
     fclose(fptr);
+    well_done();
+}
+///////////////////////////////////////////////////////CAT
+int cat()
+{
+    char path[100];
+    char flag[50];
+    scanf("%s",flag);
+    if(strcmp(flag,"--file"))
+        return error(*invalid_input);
+    if(file_input(path)==ERROR)
+        return error(*invalid_input);
+    if(check_wrong_address(path)==ERROR)
+        return error(*invalid_address);
+    if(check_existance_of_file(path)==ERROR)
+        return error(*no_such_file);
+    //////////
+    char c;
+    FILE* fptr=fopen(path,"r");
+    while(fscanf(fptr,"%c",&c)!=-1)
+    {
+        printf("%c",c);
+    }
+    printf("\n");
+    fclose(fptr);
+    well_done();
 }
 
 
