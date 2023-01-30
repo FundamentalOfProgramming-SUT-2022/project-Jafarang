@@ -7,14 +7,20 @@
 #define OK 100
 #define WRONG 0
 
-int file_with_double_quotation(char str[]);
 int get_file(char str[]);
 int file_input(char str[]);
+int check_wrong_address(char path[]);
+int find_position(int line,int pos,char str[]);
+int check_existance_of_file(char path[]);
+int str_with_double_quotation(char str[]);
+int get_str(char str[]);
+//////////////////////////////////////////
 int well_done();
 int error(void(*func)());
 void invalid_input();
 void invalid_address();
 void file_already_existed();
+//////////////////////////////////////////
 int go_to_address(char path[]);
 int create_file();
 
@@ -25,31 +31,48 @@ int main()
     create_file();
     return 0;
 }
-////////////////////////////////////////////////////////////////GENERAL
-//////////////////////////////////////////input file
-int file_with_double_quotation(char str[])
+////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////RESPONSES
+int well_done()
 {
-    gets(str);
-    int bound=strlen(str);
-    for(int i=bound-1;i>0;i--)
-    {
-        if(str[i]=='"')
-        {
-            str[i]='\0';
-            strcpy(str,&str[1]);
-            return OK;
-        }
-    }
+    char str[100];
+    fgets(str,100,stdin);
+    if(strlen(str)!=1)
+        printf("additional inputs were ignored\n");
+    return OK;
+}
+int error(void(*func)())
+{
+    char str[100];
+    fgets(str,100,stdin);
+    func();
     return ERROR;
 }
+void invalid_input()
+{
+    printf("Invalid input\n");
+}
+void invalid_address()
+{
+    printf("invalid address\n");
+}
+void file_already_existed()
+{
+    printf("file already existed\n");
+}
+
+////////////////////////////////////////////////////////////////GENERAL
+//////////////////////////////////////////input file
 int get_file(char str[])
 {
     scanf(" %c",&str[0]);
     if(str[0]=='"')
     {
-        if(file_with_double_quotation(str)==ERROR)
+        if(str_with_double_quotation(str)==ERROR)
+        {
             return ERROR;
-        return OK;
+        }
     }else
     {
         scanf("%s",&str[1]);
@@ -66,39 +89,189 @@ int file_input(char str[])
         str[strlen(str)-1]='\0';
     return OK;
 }
-////////////////////////////////////////
-
-////////////////////////////////////////////////////////////////RESPONSES
-int well_done()
+int check_wrong_address(char path[])
 {
-    char str[100];
-    fgets(str,100,stdin);
-    if(strlen(str)!=1)
-        printf("additional inputs were ignored\n");
+    strcat(path,"alo123emtehanmikonim");
+    FILE* fptr;
+    if((fptr=fopen(path,"w"))==NULL)
+    {
+        fclose(fptr);
+        remove(path);
+        return ERROR;
+    }
+    fclose(fptr);
+    remove(path);
     return OK;
 }
-
-int error(void(*func)())
+int check_existance_of_file(char path[])
 {
-    char str[100];
-    fgets(str,100,stdin);
-    func();
-    return ERROR;
+    FILE* fptr=fopen(path,"r");
+    if(fptr==NULL)
+    {
+        fclose(fptr);
+        return ERROR;
+    }
+    fclose(fptr);
+    return OK;
 }
-
-void invalid_input()
+int find_position(int line,int pos,char str[])
 {
-    printf("Invalid input\n");
+    FILE* fptr=fopen(str,"r");
+    char c;
+    int cur_line=1;
+    int cur_pos=0;
+    int index=0;
+    while(cur_line<line)
+    {
+        index++;
+        if(fscanf(fptr,"%c",&c)==0)
+        {
+            fclose(fptr);
+            return ERROR;
+        }
+        if(c=='\n')
+        {
+            cur_line++;
+        }
+    }
+    while(cur_pos<pos)
+    {
+        index++;
+        if(fscanf(fptr,"%c",&c)==0 || c=='\n')
+        {
+            fclose(fptr);
+            return ERROR;
+        }
+    }
+    fclose(fptr);
+    return index;
 }
-
-void invalid_address()
+int str_with_double_quotation(char str[])
 {
-    printf("invalid address\n");
+    int i=0;
+    while(1)
+    {
+        str[i]=fgetc(stdin);
+        switch(str[i])
+        {
+            case '"':
+                str[i]='\0';
+                return OK;
+            case '\n':
+            case '\0':
+                str[i]='\0';
+                return ERROR;
+            case '\\':
+                i++;
+                str[i]=fgetc(stdin);
+                switch(str[i])
+                {
+                    case 'n':
+                        str[i-1]='\n';
+                        break;
+                    case '"':
+                        str[i-1]='"';
+                        break;
+                    case '\\':
+                        str[i-1]='\\';
+                        break;
+                    case '\n':
+                    case '\0':
+                        str[i-1]='\\';
+                        str[i]='\0';
+                        return ERROR;
+                    default :
+                        str[i-1]='\\';
+                        i++;
+                        break;
+                }
+                break;
+            default :
+                i++;
+                break;
+        }
+    }
 }
-
-void file_already_existed()
+int get_str(char str[])
 {
-    printf("file already existed\n");
+    scanf(" %c",&str[0]);
+    if(str[0]=='"')
+    {
+        if(str_with_double_quotation(str)==ERROR)
+            return ERROR;
+        return OK;
+    }else
+    {
+        int i=0;
+        if(str[i]=='\\')
+        {
+            i++;
+            str[i]=fgetc(stdin);
+            switch(str[i])
+            {
+                case 'n':
+                    str[i-1]='\n';
+                    break;
+                case '"':
+                    str[i-1]='"';
+                    break;
+                case '\\':
+                    str[i-1]='\\';
+                    break;
+                case '\n':
+                case '\0':
+                case ' ':
+                    str[i-1]='\\';
+                    str[i]='\0';
+                    return OK;
+                default :
+                    str[i-1]='\\';
+                    i++;
+                    break;
+            }
+        }
+        while(1)
+        {
+            str[i]=fgetc(stdin);
+            switch(str[i])
+            {
+                case ' ':
+                case '\n':
+                case '\0':
+                    str[i]='\0';
+                    return OK;
+                case '\\':
+                    i++;
+                    str[i]=fgetc(stdin);
+                    switch(str[i])
+                    {
+                        case 'n':
+                            str[i-1]='\n';
+                            break;
+                        case '"':
+                            str[i-1]='"';
+                            break;
+                        case '\\':
+                            str[i-1]='\\';
+                            break;
+                        case '\n':
+                        case '\0':
+                        case ' ':
+                            str[i-1]='\\';
+                            str[i]='\0';
+                            return OK;
+                        default :
+                            str[i-1]='\\';
+                            i++;
+                            break;
+                    }
+                    break;
+                default :
+                    i++;
+                    break;
+            }
+        }
+    }
 }
 ////////////////////////////////////////////////CREATE_FILE
 
@@ -134,17 +307,7 @@ int go_to_address(char path[])
     }
     strcpy(path,path2);
     ////////
-    strcat(path2,"alo123emtehanmikonim");
-    FILE* fptr;
-    if((fptr=fopen(path2,"w"))==NULL)
-    {
-        fclose(fptr);
-        remove(path2);
-        return ERROR;
-    }
-    fclose(fptr);
-    remove(path2);
-    return OK;
+    return check_wrong_address(path2);
 }
 int create_file()
 {
@@ -171,57 +334,9 @@ int create_file()
 }
 //////////////////////////////////////////////////////INSERT
 
-/*int path_validation(char str[])
-{
-    FILE* fptr=fopen(str,"w");
-    if(fptr==NULL)
-    {
-        fclose(fptr);
-        remove(str);
-        return ERROR;
-    }
-    fclose(fptr);
-    fptr=fopen(str,"r");
-    if(fptr==NULL)
-    {
-        fclose(fptr);
-        return WRONG;
-    }
-    fclose(fptr);
-    return OK;
-}
 
-int position_validation(int line,int pos,char str[])
-{
-    FILE* fptr=fopen(str,"r");
-    char c;
-    int cur_line=1;
-    int cur_pos=0;
-    while(cur_line<line)
-    {
-        if(fscanf(fptr,"%c",&c)==0)
-        {
-            fclose(fptr);
-            return ERROR;
-        }
-        if(c=='\n')
-        {
-            cur_line++;
-        }
-    }
-    while(cur_pos<pos)
-    {
-        if(fscanf(fptr,"%c",&c)==0 || c=='\n')
-        {
-            fclose(fptr);
-            return ERROR;
-        }
-    }
-    fclose(fptr);
-    return OK;
-}
 
-int insert()
+/*int insert()
 {
     char flag[100];
     char path[100];
