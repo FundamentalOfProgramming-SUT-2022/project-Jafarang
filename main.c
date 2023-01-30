@@ -148,6 +148,7 @@ int find_position(int line,int pos,char str[])
     while(cur_pos<pos)
     {
         index++;
+        cur_pos++;
         if(fscanf(fptr,"%c",&c)==0 || c=='\n')
         {
             fclose(fptr);
@@ -243,16 +244,17 @@ int get_str(char str[])
                     i++;
                     break;
             }
-        }
+        }else
+            i++;
         while(1)
         {
             str[i]=fgetc(stdin);
             switch(str[i])
             {
-                case ' ':
                 case '\n':
                     fseek(stdin,-1,SEEK_END);
                 case '\0':
+                case ' ':
                     str[i]='\0';
                     return OK;
                 case '\\':
@@ -348,7 +350,6 @@ int create_file()
     return well_done();
 }
 //////////////////////////////////////////////////////INSERT
-
 int insert()
 {
     char flag[100];
@@ -383,7 +384,7 @@ int insert()
         }
         if(strcmp(flag,"--pos")==0)
         {
-            if(fscanf(stdin,"%d:%d",&line,&line)==0)
+            if(fscanf(stdin,"%d:%d",&line,&pos)==0)
                 return error(*invalid_input);
             if(pos_check!=0)
                 return error(*invalid_input);
@@ -399,15 +400,16 @@ int insert()
     fseek(fptr,position,SEEK_SET);
     for(int i=0;i<10000;i++)
     {
-        if(fscanf(fptr,"%c",end_str[i])==0)
+        if(fscanf(fptr,"%c",&end_str[i])==0)
         {
             end_str[i]='\0';
+            break;
         }
     }
     end_str[10000]='\0';
     fclose(fptr);
 
-    fptr=fopen(path,"a+");
+    fptr=fopen(path,"r+");
     fseek(fptr,position,SEEK_SET);
     fprintf(fptr,"%s",input_str);
     fprintf(fptr,"%s",end_str);
