@@ -20,11 +20,13 @@ int error(void(*func)());
 void invalid_input();
 void invalid_address();
 void file_already_existed();
+void out_of_bound();
 //////////////////////////////////////////
 int go_to_address(char path[]);
 int create_file();
 int insert();
 int cat();
+int remove_str();
 /////////////////////////////////////////MAIN
 int main()
 {
@@ -33,7 +35,8 @@ int main()
     //get_str(command);
     //printf("%s",command);
     //insert();
-    cat();
+    //cat();
+    remove_str();
     return 0;
 }
 ////////////////////////////////////////
@@ -72,6 +75,10 @@ void no_such_file()
 void no_such_position()
 {
     printf("no such position\n");
+}
+void out_of_bound()
+{
+    printf("out_of_bound\n");
 }
 ////////////////////////////////////////////////////////////////GENERAL
 //////////////////////////////////////////input file
@@ -416,7 +423,7 @@ int insert()
     fprintf(fptr,"%s",input_str);
     fprintf(fptr,"%s",end_str);
     fclose(fptr);
-    well_done();
+    return well_done();
 }
 ///////////////////////////////////////////////////////CAT
 int cat()
@@ -441,7 +448,111 @@ int cat()
     }
     printf("\n");
     fclose(fptr);
-    well_done();
+    return well_done();
 }
+///////////////////////////////////////////////////////
+int remove_str()
+{
+    char flag[100];
+    char path[100];
+    int line,pos,position;
+    int size;
+    int sign;
+    int size_check=0,sign_check=0,file_check=0,pos_check=0;
+    for(int i=0;i<4;i++)
+    {
+        scanf("%s",flag);
+        if(strcmp(flag,"--file")==0)
+        {
+            if(file_check!=0)
+                return error(*invalid_input);
+            file_check++;
+            if(file_input(path)==ERROR)
+                return error(*invalid_input);
+            if(check_wrong_address(path)==ERROR)
+                return error(*invalid_address);
+            if(check_existance_of_file(path)==ERROR)
+                return error(*no_such_file);
+            continue;
+        }
+        if(strcmp(flag,"--pos")==0)
+        {
+            if(pos_check!=0)
+                return error(*invalid_input);
+            pos_check++;
+            if(fscanf(stdin,"%d:%d",&line,&pos)==-1)
+                return error(*invalid_input);
+            if((position=find_position(line,pos,path))==ERROR)
+                return error(*no_such_position);
+            continue;
+        }
+        if(strcmp(flag,"-size")==0)
+        {
+            if(size_check!=0)
+                return error(*invalid_input);
+            size_check++;
+            scanf("%d",&size);
+            continue;
+        }
+        if(strcmp(flag,"-b")==0)
+        {
+            if(sign_check!=0)
+                return error(*invalid_input);
+            sign_check++;
+            sign=-1;
+            continue;
+        }
+        if(strcmp(flag,"-f")==0)
+        {
+            if(sign_check!=0)
+                return error(*invalid_input);
+            sign_check++;
+            sign=1;
+            continue;
+        }
+    }
+    ////////////
+    FILE* fptr;
+    char c;
+    if(size==0)
+        return well_done();
+    if(sign==-1)
+    {
+        position-=size;
+        if(position<0)
+            return error(*out_of_bound);
+    }else
+    {
+        fptr=fopen(path,"r");
+        fseek(fptr,position+size-1,SEEK_SET);
+        if(fscanf(fptr,"%c",&c)==-1)
+            return error(*out_of_bound);
+        fclose(fptr);
+    }
+    ////////
+    char end_str[10001],begining_str[10001];
+    fptr=fopen(path,"r");
+    for(int i=0;i<position;i++)
+    {
+        fscanf(fptr,"%c",&begining_str[i]);
+    }
+    begining_str[position]='\0';
+    fseek(fptr,size,SEEK_CUR);
+    for(int i=0;i<10000;i++)
+    {
+        if(fscanf(fptr,"%c",&end_str[i])==-1)
+        {
+            end_str[i]='\0';
+            break;
+        }
+    }
+    end_str[10000]='\0';
+    fclose(fptr);
 
-
+    fptr=fopen(path,"w");
+    fprintf(fptr,"%s",begining_str);
+    fprintf(fptr,"%s",end_str);
+    fclose(fptr);
+    //return well_done();
+    return well_done();
+}
