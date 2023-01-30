@@ -23,16 +23,18 @@ void file_already_existed();
 //////////////////////////////////////////
 int go_to_address(char path[]);
 int create_file();
-
+int insert();
 /////////////////////////////////////////MAIN
 int main()
 {
     char command[30];
-    create_file();
+    //create_file();
+    //get_str(command);
+    //printf("%s",command);
+    insert();
     return 0;
 }
 ////////////////////////////////////////
-
 ////////////////////////////////////////////////////////////////RESPONSES
 int well_done()
 {
@@ -61,7 +63,14 @@ void file_already_existed()
 {
     printf("file already existed\n");
 }
-
+void no_such_file()
+{
+    printf("no such file found\n");
+}
+void no_such_position()
+{
+    printf("no such position\n");
+}
 ////////////////////////////////////////////////////////////////GENERAL
 //////////////////////////////////////////input file
 int get_file(char str[])
@@ -89,8 +98,10 @@ int file_input(char str[])
         str[strlen(str)-1]='\0';
     return OK;
 }
-int check_wrong_address(char path[])
+int check_wrong_address(char str[])
 {
+    char path[100];
+    strcpy(path,str);
     strcat(path,"alo123emtehanmikonim");
     FILE* fptr;
     if((fptr=fopen(path,"w"))==NULL)
@@ -158,6 +169,7 @@ int str_with_double_quotation(char str[])
                 str[i]='\0';
                 return OK;
             case '\n':
+                fseek(stdin,-1,SEEK_END);
             case '\0':
                 str[i]='\0';
                 return ERROR;
@@ -176,6 +188,7 @@ int str_with_double_quotation(char str[])
                         str[i-1]='\\';
                         break;
                     case '\n':
+                        fseek(stdin,-1,SEEK_END);
                     case '\0':
                         str[i-1]='\\';
                         str[i]='\0';
@@ -219,6 +232,7 @@ int get_str(char str[])
                     str[i-1]='\\';
                     break;
                 case '\n':
+                    fseek(stdin,-1,SEEK_END);
                 case '\0':
                 case ' ':
                     str[i-1]='\\';
@@ -237,6 +251,7 @@ int get_str(char str[])
             {
                 case ' ':
                 case '\n':
+                    fseek(stdin,-1,SEEK_END);
                 case '\0':
                     str[i]='\0';
                     return OK;
@@ -255,6 +270,7 @@ int get_str(char str[])
                             str[i-1]='\\';
                             break;
                         case '\n':
+                            fseek(stdin,-1,SEEK_END);
                         case '\0':
                         case ' ':
                             str[i-1]='\\';
@@ -274,7 +290,6 @@ int get_str(char str[])
     }
 }
 ////////////////////////////////////////////////CREATE_FILE
-
 int go_to_address(char path[])
 {
     char path2[100];
@@ -334,14 +349,12 @@ int create_file()
 }
 //////////////////////////////////////////////////////INSERT
 
-
-
-/*int insert()
+int insert()
 {
     char flag[100];
     char path[100];
-    int line,pos;
-    char input_str[1000];
+    int line,pos,position;
+    char input_str[10000];
     int str_check=0,file_check=0,pos_check=0;
     for(int i=0;i<3;i++)
     {
@@ -349,28 +362,56 @@ int create_file()
         if(strcmp(flag,"--file")==0)
         {
             if(file_check!=0)
-            {
-                printf("invalid input\n");
-                fgets(input_str,1000,stdin);
-                return ERROR
-            }
+                return error(*invalid_input);
             file_check++;
-            get_str(flag);
-            file_input(flag);
-            if(path_validation(flag)==ERROR)
-            {
-                printf("wrong address");
-                fgets(input_str,1000,stdin);
-                return ERROR;
-            }
-            if(path_validation(flag)==WRONG)
-            {
-                printf("no such file found");
-                fgets(input_str,1000,stdin);
-                return ERROR;
-            }
+            if(file_input(path)==ERROR)
+                return error(*invalid_input);
+            if(check_wrong_address(path)==ERROR)
+                return error(*invalid_address);
+            if(check_existance_of_file(path)==ERROR)
+                return error(*no_such_file);
+            continue;
+        }
+        if(strcmp(flag,"--str")==0)
+        {
+            if(str_check!=0)
+                return error(*invalid_input);
+            str_check++;
+            if(get_str(input_str)==ERROR)
+                return error(*invalid_input);
+            continue;
+        }
+        if(strcmp(flag,"--pos")==0)
+        {
+            if(fscanf(stdin,"%d:%d",&line,&line)==0)
+                return error(*invalid_input);
+            if(pos_check!=0)
+                return error(*invalid_input);
+            pos_check++;
+            if((position=find_position(line,pos,path))==ERROR)
+                return error(*no_such_position);
+            continue;
         }
     }
-}*/
+    /////////////////
+    char end_str[10001];
+    FILE* fptr=fopen(path,"r");
+    fseek(fptr,position,SEEK_SET);
+    for(int i=0;i<10000;i++)
+    {
+        if(fscanf(fptr,"%c",end_str[i])==0)
+        {
+            end_str[i]='\0';
+        }
+    }
+    end_str[10000]='\0';
+    fclose(fptr);
+
+    fptr=fopen(path,"a+");
+    fseek(fptr,position,SEEK_SET);
+    fprintf(fptr,"%s",input_str);
+    fprintf(fptr,"%s",end_str);
+    fclose(fptr);
+}
 
 
