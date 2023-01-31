@@ -36,6 +36,7 @@ int insert();
 int cat();
 int remove_str();
 int copy();
+int cut();
 /////////////////////////////////////////MAIN
 int main()
 {
@@ -696,5 +697,77 @@ int copy()
         return error(*out_of_bound);
     //////////
     get_str_from_file(path,position,size,clipboard);
+    return well_done();
+}
+////////////////////////////////////////////////////////////////////CUT
+int cut()
+{
+    char flag[100];
+    char path[100];
+    int line,pos,position;
+    int size;
+    int sign;
+    int size_check=0,sign_check=0,file_check=0,pos_check=0;
+    for(int i=0;i<4;i++)
+    {
+        scanf("%s",flag);
+        if(strcmp(flag,"--file")==0)
+        {
+            if(file_check!=0)
+                return error(*invalid_input);
+            file_check++;
+            if(file_input(path)==ERROR)
+                return error(*invalid_input);
+            if(check_wrong_address(path)==ERROR)
+                return error(*invalid_address);
+            if(check_existance_of_file(path)==ERROR)
+                return error(*no_such_file);
+            continue;
+        }
+        if(strcmp(flag,"--pos")==0)
+        {
+            if(pos_check!=0)
+                return error(*invalid_input);
+            pos_check++;
+            if(fscanf(stdin,"%d:%d",&line,&pos)==-1)
+                return error(*invalid_input);
+            if((position=find_position(line,pos,path))==ERROR)
+                return error(*no_such_position);
+            continue;
+        }
+        if(strcmp(flag,"-size")==0)
+        {
+            if(size_check!=0)
+                return error(*invalid_input);
+            size_check++;
+            scanf("%d",&size);
+            continue;
+        }
+        if(strcmp(flag,"-b")==0)
+        {
+            if(sign_check!=0)
+                return error(*invalid_input);
+            sign_check++;
+            sign=-1;
+            continue;
+        }
+        if(strcmp(flag,"-f")==0)
+        {
+            if(sign_check!=0)
+                return error(*invalid_input);
+            sign_check++;
+            sign=1;
+            continue;
+        }
+    }
+    if((position=check_position(path,sign,size,position))==ERROR)
+        return error(*out_of_bound);
+    /////////////////
+    get_str_from_file(path,position,size,clipboard);
+    char end_str[10001],begining_str[10001],middle[1];
+    strcpy(middle,"");
+    get_begining_of_file(path,position,begining_str);
+    get_end_of_file(path,position+size,end_str);
+    rebuild(path,begining_str,middle,end_str);
     return well_done();
 }
