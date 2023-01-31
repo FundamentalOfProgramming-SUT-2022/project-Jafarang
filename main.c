@@ -7,6 +7,8 @@
 #define OK 100
 #define WRONG 0
 
+char clipboard[10001];
+
 int get_file(char str[]);
 int file_input(char str[]);
 int check_wrong_address(char path[]);
@@ -19,6 +21,7 @@ int get_begining_of_file(char path[],int position,char str[]);
 int get_end_of_file(char path[],int position,char str[]);
 int get_str_from_file(char path[],int position,int size,char str[]);
 int rebuild(char path[],char begining_str[],char str[],char end_str[]);
+int find_real_position(char path[],int position);
 //////////////////////////////////////////
 int well_done();
 int error(void(*func)());
@@ -32,6 +35,7 @@ int create_file();
 int insert();
 int cat();
 int remove_str();
+int copy();
 /////////////////////////////////////////MAIN
 int main()
 {
@@ -41,7 +45,7 @@ int main()
     //printf("%s",command);
     //insert();
     //cat();
-    remove_str();
+    //remove_str();
     //char path[]={"root/test.txt"};
     //get_end_of_file(path,5,command);
     /*get_str(command);
@@ -63,6 +67,8 @@ int main()
         printf("*%c",command[i]);
     }*/
     //printf("%s",command);
+    //copy();
+    //printf("%s",clipboard);
     return 0;
 }
 ////////////////////////////////////////
@@ -384,7 +390,7 @@ int get_end_of_file(char path[],int position,char str[])
 int get_str_from_file(char path[],int position,int size,char str[])
 {
     int real_position=find_real_position(path,position);
-    FILE* fptr=fopen(path,"r+");
+    FILE* fptr=fopen(path,"r");
     fseek(fptr,real_position,SEEK_SET);
     for(int i=0;i<size;i++)
     {
@@ -626,4 +632,69 @@ int remove_str()
     return well_done();
 }
 ////////////////////////////////////////////////////////COPY
-
+int copy()
+{
+    char flag[100];
+    char path[100];
+    int line,pos,position;
+    int size;
+    int sign;
+    int size_check=0,sign_check=0,file_check=0,pos_check=0;
+    for(int i=0;i<4;i++)
+    {
+        scanf("%s",flag);
+        if(strcmp(flag,"--file")==0)
+        {
+            if(file_check!=0)
+                return error(*invalid_input);
+            file_check++;
+            if(file_input(path)==ERROR)
+                return error(*invalid_input);
+            if(check_wrong_address(path)==ERROR)
+                return error(*invalid_address);
+            if(check_existance_of_file(path)==ERROR)
+                return error(*no_such_file);
+            continue;
+        }
+        if(strcmp(flag,"--pos")==0)
+        {
+            if(pos_check!=0)
+                return error(*invalid_input);
+            pos_check++;
+            if(fscanf(stdin,"%d:%d",&line,&pos)==-1)
+                return error(*invalid_input);
+            if((position=find_position(line,pos,path))==ERROR)
+                return error(*no_such_position);
+            continue;
+        }
+        if(strcmp(flag,"-size")==0)
+        {
+            if(size_check!=0)
+                return error(*invalid_input);
+            size_check++;
+            scanf("%d",&size);
+            continue;
+        }
+        if(strcmp(flag,"-b")==0)
+        {
+            if(sign_check!=0)
+                return error(*invalid_input);
+            sign_check++;
+            sign=-1;
+            continue;
+        }
+        if(strcmp(flag,"-f")==0)
+        {
+            if(sign_check!=0)
+                return error(*invalid_input);
+            sign_check++;
+            sign=1;
+            continue;
+        }
+    }
+    if((position=check_position(path,sign,size,position))==ERROR)
+        return error(*out_of_bound);
+    //////////
+    get_str_from_file(path,position,size,clipboard);
+    return well_done();
+}
