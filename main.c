@@ -37,9 +37,11 @@ int cat();
 int remove_str();
 int copy();
 int cut();
+int paste();
 /////////////////////////////////////////MAIN
 int main()
 {
+    clipboard[0]='\0';
     char command[30];
     //create_file();
     //get_str(command);
@@ -68,7 +70,9 @@ int main()
         printf("*%c",command[i]);
     }*/
     //printf("%s",command);
-    //copy();
+    copy();
+    paste();
+    cat();
     //printf("%s",clipboard);
     return 0;
 }
@@ -769,5 +773,51 @@ int cut()
     get_begining_of_file(path,position,begining_str);
     get_end_of_file(path,position+size,end_str);
     rebuild(path,begining_str,middle,end_str);
+    return well_done();
+}
+/////////////////////////////////////////////////////////////PASTE
+int paste()
+{
+    char flag[100];
+    char path[100];
+    int line,pos,position;
+    int file_check=0,pos_check=0;
+    for(int i=0;i<2;i++)
+    {
+        scanf("%s",flag);
+        if(strcmp(flag,"--file")==0)
+        {
+            if(file_check!=0)
+                return error(*invalid_input);
+            file_check++;
+            if(file_input(path)==ERROR)
+                return error(*invalid_input);
+            if(check_wrong_address(path)==ERROR)
+                return error(*invalid_address);
+            if(check_existance_of_file(path)==ERROR)
+                return error(*no_such_file);
+            continue;
+        }
+        if(strcmp(flag,"--pos")==0)
+        {
+            if(pos_check!=0)
+                return error(*invalid_input);
+            pos_check++;
+            if(fscanf(stdin,"%d:%d",&line,&pos)==-1)
+                return error(*invalid_input);
+            if((position=find_position(line,pos,path))==ERROR)
+                return error(*no_such_position);
+            continue;
+        }
+    }
+    /////////////////
+    char end_str[10001];
+    int real_position=find_real_position(path,position);
+    get_end_of_file(path,position,end_str);
+    FILE* fptr=fopen(path,"r+");
+    fseek(fptr,real_position,SEEK_SET);
+    fprintf(fptr,"%s",clipboard);
+    fprintf(fptr,"%s",end_str);
+    fclose(fptr);
     return well_done();
 }
