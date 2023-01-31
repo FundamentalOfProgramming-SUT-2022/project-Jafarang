@@ -41,7 +41,7 @@ int main()
     //printf("%s",command);
     //insert();
     //cat();
-    //remove_str();
+    remove_str();
     //char path[]={"root/test.txt"};
     //get_end_of_file(path,5,command);
     /*get_str(command);
@@ -366,8 +366,9 @@ int get_begining_of_file(char path[],int position,char str[])
 }
 int get_end_of_file(char path[],int position,char str[])
 {
-    FILE* fptr=fopen(path,"r");
-    fgets(str,position,fptr);//alaki
+    int real_position=find_real_position(path,position);
+    FILE* fptr=fopen(path,"r+");
+    fseek(fptr,real_position,SEEK_SET);
     for(int i=0;i<10000;i++)
     {
         if(fscanf(fptr,"%c",&str[i])==-1)
@@ -376,14 +377,15 @@ int get_end_of_file(char path[],int position,char str[])
             break;
         }
     }
-    //str[10000]='\0';
+    str[10000]='\0';
     fclose(fptr);
     return OK;
 }
 int get_str_from_file(char path[],int position,int size,char str[])
 {
-    FILE* fptr=fopen(path,"r");
-    fgets(str,position,fptr);//alaki
+    int real_position=find_real_position(path,position);
+    FILE* fptr=fopen(path,"r+");
+    fseek(fptr,real_position,SEEK_SET);
     for(int i=0;i<size;i++)
     {
         fscanf(fptr,"%c",&str[i]);
@@ -395,11 +397,22 @@ int get_str_from_file(char path[],int position,int size,char str[])
 int rebuild(char path[],char begining_str[],char str[],char end_str[])
 {
     FILE* fptr=fopen(path,"w");
-    fprintf(fptr,"%s*",begining_str);
+    fprintf(fptr,"%s",begining_str);
     fprintf(fptr,"%s",str);
-    fprintf(fptr,"*%s",end_str);
+    fprintf(fptr,"%s",end_str);
     fclose(fptr);
     return OK;
+}
+int find_real_position(char path[],int position)
+{
+    FILE* fptr=fopen(path,"r");
+    for(int i=0;i<position;i++)
+    {
+        fgetc(fptr);
+    }//alaki
+    int real_position=ftell(fptr);
+    fclose(fptr);
+    return real_position;
 }
 ////////////////////////////////////////////////CREATE_FILE
 int go_to_address(char path[])
@@ -505,12 +518,14 @@ int insert()
         }
     }
     /////////////////
-    char end_str[10001],begining_str[10001];
+    char end_str[10001];
+    int real_position=find_real_position(path,position);
     get_end_of_file(path,position,end_str);
     FILE* fptr=fopen(path,"r+");
-    fgets(begining_str,position,fptr);//alaki
+    fseek(fptr,real_position,SEEK_SET);
     fprintf(fptr,"%s",input_str);
     fprintf(fptr,"%s",end_str);
+    //printf("%s",input_str);
     fclose(fptr);
     return well_done();
 }
