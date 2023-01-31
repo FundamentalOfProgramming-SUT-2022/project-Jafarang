@@ -14,6 +14,11 @@ int find_position(int line,int pos,char str[]);
 int check_existance_of_file(char path[]);
 int str_with_double_quotation(char str[]);
 int get_str(char str[]);
+int check_position(char path[],int sign,int size,int position);
+int get_begining_of_file(char path[],int position,char str[]);
+int get_end_of_file(char path[],int position,char str[]);
+int get_str_from_file(char path[],int position,int size,char str[]);
+int rebuild(char path[],char begining_str[],char str[],char end_str[]);
 //////////////////////////////////////////
 int well_done();
 int error(void(*func)());
@@ -36,7 +41,28 @@ int main()
     //printf("%s",command);
     //insert();
     //cat();
-    remove_str();
+    //remove_str();
+    //char path[]={"root/test.txt"};
+    //get_end_of_file(path,5,command);
+    /*get_str(command);
+    FILE*fptr=fopen("root/test.txt","w");
+    fprintf(fptr,"%s",command);
+    fclose(fptr);
+    char c;
+    fptr=fopen("root/test.txt","r");
+    for(int i=0;i<strlen(command);i++)
+    {
+        //fseek(fptr,i,SEEK_SET);
+        fscanf(fptr,"%c",&c);
+        printf("*%c%d",c,c);
+    }
+    fclose(fptr);*/
+    /*get_end_of_file("root/test.txt",8,command);
+    for(int i=0;i<strlen(command);i++)
+    {
+        printf("*%c",command[i]);
+    }*/
+    //printf("%s",command);
     return 0;
 }
 ////////////////////////////////////////
@@ -152,6 +178,7 @@ int find_position(int line,int pos,char str[])
         if(c=='\n')
         {
             cur_line++;
+            //index++;
         }
     }
     while(cur_pos<pos)
@@ -179,7 +206,7 @@ int str_with_double_quotation(char str[])
                 str[i]='\0';
                 return OK;
             case '\n':
-                fseek(stdin,-1,SEEK_END);
+                fseek(stdin,-2,SEEK_END);
             case '\0':
                 str[i]='\0';
                 return ERROR;
@@ -198,7 +225,7 @@ int str_with_double_quotation(char str[])
                         str[i-1]='\\';
                         break;
                     case '\n':
-                        fseek(stdin,-1,SEEK_END);
+                        fseek(stdin,-2,SEEK_END);
                     case '\0':
                         str[i-1]='\\';
                         str[i]='\0';
@@ -242,7 +269,7 @@ int get_str(char str[])
                     str[i-1]='\\';
                     break;
                 case '\n':
-                    fseek(stdin,-1,SEEK_END);
+                    fseek(stdin,-2,SEEK_END);
                 case '\0':
                 case ' ':
                     str[i-1]='\\';
@@ -261,7 +288,7 @@ int get_str(char str[])
             switch(str[i])
             {
                 case '\n':
-                    fseek(stdin,-1,SEEK_END);
+                    fseek(stdin,-2,SEEK_END);
                 case '\0':
                 case ' ':
                     str[i]='\0';
@@ -281,7 +308,7 @@ int get_str(char str[])
                             str[i-1]='\\';
                             break;
                         case '\n':
-                            fseek(stdin,-1,SEEK_END);
+                            fseek(stdin,-2,SEEK_END);
                         case '\0':
                         case ' ':
                             str[i-1]='\\';
@@ -299,6 +326,80 @@ int get_str(char str[])
             }
         }
     }
+}
+int check_position(char path[],int sign,int size,int position)
+{
+    FILE* fptr;
+    char c;
+    if(size==0)
+        return position;
+    if(sign==-1)
+    {
+        position-=size;
+        if(position<0)
+            return ERROR;
+    }else
+    {
+        fptr=fopen(path,"r");
+        for(int i=0;i<position+size;i++)
+        {
+            if(fscanf(fptr,"%c",&c)==-1)
+            {
+                fclose(fptr);
+                return ERROR;
+            }
+        }
+        fclose(fptr);
+    }
+    return position;
+}
+int get_begining_of_file(char path[],int position,char str[])
+{
+    FILE* fptr=fopen(path,"r");
+    for(int i=0;i<position;i++)
+    {
+        fscanf(fptr,"%c",&str[i]);
+    }
+    str[position]='\0';
+    fclose(fptr);
+    return OK;
+}
+int get_end_of_file(char path[],int position,char str[])
+{
+    FILE* fptr=fopen(path,"r");
+    fgets(str,position,fptr);//alaki
+    for(int i=0;i<10000;i++)
+    {
+        if(fscanf(fptr,"%c",&str[i])==-1)
+        {
+            str[i]='\0';
+            break;
+        }
+    }
+    //str[10000]='\0';
+    fclose(fptr);
+    return OK;
+}
+int get_str_from_file(char path[],int position,int size,char str[])
+{
+    FILE* fptr=fopen(path,"r");
+    fgets(str,position,fptr);//alaki
+    for(int i=0;i<size;i++)
+    {
+        fscanf(fptr,"%c",&str[i]);
+    }
+    str[size]='\0';
+    fclose(fptr);
+    return OK;
+}
+int rebuild(char path[],char begining_str[],char str[],char end_str[])
+{
+    FILE* fptr=fopen(path,"w");
+    fprintf(fptr,"%s*",begining_str);
+    fprintf(fptr,"%s",str);
+    fprintf(fptr,"*%s",end_str);
+    fclose(fptr);
+    return OK;
 }
 ////////////////////////////////////////////////CREATE_FILE
 int go_to_address(char path[])
@@ -404,22 +505,10 @@ int insert()
         }
     }
     /////////////////
-    char end_str[10001];
-    FILE* fptr=fopen(path,"r");
-    fseek(fptr,position,SEEK_SET);
-    for(int i=0;i<10000;i++)
-    {
-        if(fscanf(fptr,"%c",&end_str[i])==-1)
-        {
-            end_str[i]='\0';
-            break;
-        }
-    }
-    end_str[10000]='\0';
-    fclose(fptr);
-
-    fptr=fopen(path,"r+");
-    fseek(fptr,position,SEEK_SET);
+    char end_str[10001],begining_str[10001];
+    get_end_of_file(path,position,end_str);
+    FILE* fptr=fopen(path,"r+");
+    fgets(begining_str,position,fptr);//alaki
     fprintf(fptr,"%s",input_str);
     fprintf(fptr,"%s",end_str);
     fclose(fptr);
@@ -450,7 +539,7 @@ int cat()
     fclose(fptr);
     return well_done();
 }
-///////////////////////////////////////////////////////
+///////////////////////////////////////////////////////REMOVE
 int remove_str()
 {
     char flag[100];
@@ -511,48 +600,15 @@ int remove_str()
             continue;
         }
     }
-    ////////////
-    FILE* fptr;
-    char c;
-    if(size==0)
-        return well_done();
-    if(sign==-1)
-    {
-        position-=size;
-        if(position<0)
-            return error(*out_of_bound);
-    }else
-    {
-        fptr=fopen(path,"r");
-        fseek(fptr,position+size-1,SEEK_SET);
-        if(fscanf(fptr,"%c",&c)==-1)
-            return error(*out_of_bound);
-        fclose(fptr);
-    }
+    if((position=check_position(path,sign,size,position))==ERROR)
+        return error(*out_of_bound);
     ////////
-    char end_str[10001],begining_str[10001];
-    fptr=fopen(path,"r");
-    for(int i=0;i<position;i++)
-    {
-        fscanf(fptr,"%c",&begining_str[i]);
-    }
-    begining_str[position]='\0';
-    fseek(fptr,size,SEEK_CUR);
-    for(int i=0;i<10000;i++)
-    {
-        if(fscanf(fptr,"%c",&end_str[i])==-1)
-        {
-            end_str[i]='\0';
-            break;
-        }
-    }
-    end_str[10000]='\0';
-    fclose(fptr);
-
-    fptr=fopen(path,"w");
-    fprintf(fptr,"%s",begining_str);
-    fprintf(fptr,"%s",end_str);
-    fclose(fptr);
-    //return well_done();
+    char end_str[10001],begining_str[10001],middle[1];
+    strcpy(middle,"");
+    get_begining_of_file(path,position,begining_str);
+    get_end_of_file(path,position+size,end_str);
+    rebuild(path,begining_str,middle,end_str);
     return well_done();
 }
+////////////////////////////////////////////////////////COPY
+
