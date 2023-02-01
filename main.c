@@ -42,6 +42,9 @@ int find();
 int str_for_find_with_double_quotation(char str[]);
 int get_str_for_find(char str[]);
 int search(char *str1,char *str2,int pos);
+int get_option(int *at,int* count, int* byword, int* all);
+int find_start_word(char str[],int pos);
+int start_search(char*input_str,char*file,int mod,int*sar, int*tah);
 /////////////////////////////////////////MAIN
 int main()
 {
@@ -74,10 +77,12 @@ int main()
         printf("*%c",command[i]);
     }*/
     //printf("%s",command);
-    copy();
-    paste();
-    cat();
+    //copy();
+    //paste();
+    //cat();
     //printf("%s",clipboard);
+    find();
+    //printf("%d",find_start_word("hello\nhello salam",13));
     return 0;
 }
 ////////////////////////////////////////
@@ -831,19 +836,19 @@ int search(char *str1,char *str2,int pos)
 {
     if(strlen(str1)==0)
     {
-        if(str1[1]=='*')
+        if(str1[1]=='\0')
         {
             for(int i=0;i<strlen(str2);i++)
             {
                 if(str2[i]==' ' ||str2[i]=='\n')
-                    return pos+i;
+                    return pos+i+1;
             }
             return pos+strlen(str2);
         }
-        return pos;
+        return pos+1;
     }
     int tah;
-    int limit=strlen(str2)-strlen(str1);
+    int limit=strlen(str2)-strlen(str1)+1;
     for(int i=0;i<limit;i++)
     {
         if(str2[i]==' ' || str2[i]=='\n')
@@ -896,6 +901,7 @@ int get_str_for_find(char str[])
                     str[i-1]='\\';
                     str[i]='\0';
                     str[i+1]='\0';
+                    str[i+2]='2';
                     return OK;
                 case '*':
                     str[i-1]='*';
@@ -920,9 +926,11 @@ int get_str_for_find(char str[])
                 case ' ':
                     str[i]='\0';
                     str[i+1]='\0';
+                    str[i+2]='2';
                     return OK;
                 case '*':
                     str[i]='\0';
+                    i++;
                     break;
                 case '\\':
                     i++;
@@ -945,6 +953,7 @@ int get_str_for_find(char str[])
                             str[i-1]='\\';
                             str[i]='\0';
                             str[i+1]='\0';
+                            str[i+2]='2';
                             return OK;
                         case '*':
                             str[i-1]='*';
@@ -973,12 +982,17 @@ int str_for_find_with_double_quotation(char str[])
             case '"':
                 str[i]='\0';
                 str[i+1]='\0';
+                str[i+2]='2';
                 return OK;
             case '\n':
                 fseek(stdin,-2,SEEK_END);
             case '\0':
                 str[i]='\0';
                 return ERROR;
+            case '*':
+                str[i]='\0';
+                i++;
+                break;
             case '\\':
                 i++;
                 str[i]=fgetc(stdin);
@@ -989,6 +1003,9 @@ int str_for_find_with_double_quotation(char str[])
                         break;
                     case '"':
                         str[i-1]='"';
+                        break;
+                    case '*':
+                        str[i-1]='*';
                         break;
                     case '\\':
                         str[i-1]='\\';
@@ -1011,12 +1028,214 @@ int str_for_find_with_double_quotation(char str[])
         }
     }
 }
+int get_option(int* at,int* count, int* byword, int* all)
+{
+    //char input[1000];
+    char flag[100];
+    //fgets(input,1000,stdin);
+    //fseek(stdin,-2,SEEK_CUR);
+    //int pos=0;
+    char c;
+    while(1)
+    {
+        scanf("%c",&c);
+        //pos++;
+        if(c==' ')
+            continue;
+        if(c=='\n')
+            return OK;
+        if(c=='-')
+        {
+            scanf("%s",flag);
+            //pos+=strlen(flag);
+            if(strcmp(flag,"at")==0)
+            {
+                if(*at!=-10)
+                    return ERROR;
+                scanf("%d",at);
+                continue;
+            }
+            if(strcmp(flag,"all")==0)
+            {
+                if(*all!=0)
+                    return ERROR;
+                (*all)++;
+                continue;
+            }
+            if(strcmp(flag,"byword")==0)
+            {
+                if(*byword!=0)
+                    return ERROR;
+                (*byword)++;
+                continue;
+            }
+            if(strcmp(flag,"count")==0)
+            {
+                if(*count!=0)
+                    return ERROR;
+                (*count)++;
+                continue;
+            }
+            return error(*invalid_input);
+        }
+    }
+}
+int find_start_word(char str[],int pos)
+{
+    int i=0;
+    int word=0;
+    while(i<pos)
+    {
+        while((str[i]==' '||str[i]=='\n')&&i<pos)
+        {
+            //printf("%d:%c ",i,str[i]);
+            i++;
+        }
+        while(i<pos)
+        {
+            //printf("%d:%c ",i,str[i]);
+            if(str[i]==' '||str[i]=='\n')
+            {
+                break;
+            }
+            i++;
+        }
+        word++;
+    }
+    return word;
+}
+int start_search(char*input_str,char*file,int mode,int*sar, int*tah)
+{
+    int tedad=0;
+    if(input_str[0]=='\0')
+    {
+        if((*tah=search(&input_str[1],&file[0],0))!=ERROR)
+        {
+            *sar=1;
+            tedad++;
+        }
+        for(int i=0;i<strlen(file);i++)
+        {
+            if(file[i]=='\n' || file[i]==' ')
+            {
+                if((*tah=search(&input_str[1],&file[i+1],i+1))!=ERROR)
+                {
+                    *sar=i+2;
+                    tedad++;
+                }
+            }
+        }
+        *sar=-1;
+        //return;
+    }
+    ////////
+    int limit=strlen(file)-strlen(input_str)+1;
+    for(int i=0;i<limit;i++)
+    {
+        if(strncmp(input_str,&file[i],strlen(input_str))==0)
+        {
+            if((*tah=search(&input_str[strlen(input_str)+1],&file[i+strlen(input_str)],i+strlen(input_str)))!=ERROR)
+            {
+                *sar=i+1;
+                tedad++;
+            }
+        }
+    }
+    *sar=-1;
+    //return;
+}
+int different_modes(int mode,int sar,int tedad,char str[],int at)
+{
+    if(mode==0)
+    {
+        if(sar==-1)
+        {
+            printf("%d\n",tedad);
+        }
+        return OK;
+    }
+    if(mode==1)
+    {
+        if(sar!=-1)
+        {
+            if(tedad==1)
+                printf("%d",sar);
+            else
+                printf(", %d",sar);
+        }else if(sar==-1)
+        {
+            printf("\n");
+        }
+        return OK;
+    }
+    if(mode==2)
+    {
+        if(sar!=-1)
+        {
+            if(tedad==1)
+                printf("%d",find_start_word(str,sar));
+            else
+                printf(", %d",find_start_word(str,sar));
+        }else if(sar==-1)
+        {
+            printf("\n");
+        }
+        return OK;
+    }
+    if(mode==3)
+    {
+        if(tedad==at)
+        {
+            printf("%d\n",sar);
+            return ERROR;
+        }
+        if(sar==-1)
+            printf("-1\n");
+        return OK;
+    }
+    if(mode==4)
+    {
+        if(tedad==at)
+        {
+            printf("%d\n",find_start_word(str,sar));
+            return ERROR;
+        }
+        if(sar==-1)
+            printf("-1\n");
+        return OK;
+    }
+    if(mode==5)
+    {
+        if(sar!=-1)
+        {
+            printf("%d\n",find_start_word(str,sar));
+            return ERROR;
+        }else
+        {
+            printf("-1\n");
+            return OK;
+        }
+    }
+    if(mode==6)
+    {
+        if(sar!=-1)
+        {
+            printf("%d\n",sar);
+            return ERROR;
+        }else
+        {
+            printf("-1\n");
+            return OK;
+        }
+    }
+}
 int find()
 {
     char flag[100];
     char path[100];
     char input_str[10000];
     char file[10001];
+    int at=-10,count=0,byword=0,all=0;
     int str_check=0,file_check=0;
     for(int i=0;i<2;i++)
     {
@@ -1044,18 +1263,64 @@ int find()
             continue;
         }
     }
+    ////
+    int mode;
+    if(get_option(&at,&count,&byword,&all)==ERROR)
+       return error(*invalid_input);
+    if(count==1)
+    {
+        if(at==-10&&byword==0&&all==0)
+        {
+            mode=0;
+        }else
+            return error(*invalid_input);
+    }else
+    {
+        if(all==1)
+        {
+            if(at==-10 && byword==0)
+                mode=1;
+            else if(at==0 && byword==1)
+                mode=2;
+            else
+                return error(*invalid_input);
+        }
+        else
+        {
+            if(at!=-10 && byword==0)
+                mode=3;
+            else if(at!=-10 && byword==1)
+                mode=4;
+            else if(at==-10 && byword==1)
+                mode=5;
+            else
+                mode=6;
+        }
+    }
+    //printf("mode:%d ",mode);
+    ////////
     FILE* fptr=fopen(path,"r");
     for(int i=0;fscanf(fptr,"%c",&file[i])!=-1;i++);
     file[strlen(file)]='\0';
     /////////////////
+    /*for(int i=0;i<20;i++)
+    {
+        if(input_str[i]=='\0')
+            printf("-");
+        else
+            printf("%c",input_str[i]);
+    }*/
     int tah;
-    int javab;
+    int sar;
+    int tedad=0;
     if(input_str[0]=='\0')
     {
         if((tah=search(&input_str[1],&file[0],0))!=ERROR)
         {
-            printf("1\n");
-            return well_done();
+            sar=1;
+            tedad++;
+            if(different_modes(mode,sar,tedad,file,at)==ERROR)
+                return OK;
         }
         for(int i=0;i<strlen(file);i++)
         {
@@ -1063,28 +1328,34 @@ int find()
             {
                 if((tah=search(&input_str[1],&file[i+1],i+1))!=ERROR)
                 {
-                    printf("%d\n",i+2);
-                    return well_done();
+                    sar=i+2;
+                    tedad++;
+                    if(different_modes(mode,sar,tedad,file,at)==ERROR)
+                        return OK;
                 }
-
             }
         }
-        printf("-1\n");
-        return well_done();
+        sar=-1;
+        different_modes(mode,sar,tedad,file,at);
+            return OK;
     }
     ////////
-    int limit=strlen(file)-strlen(input_str);
+    int limit=strlen(file)-strlen(input_str)+1;
     for(int i=0;i<limit;i++)
     {
         if(strncmp(input_str,&file[i],strlen(input_str))==0)
         {
             if((tah=search(&input_str[strlen(input_str)+1],&file[i+strlen(input_str)],i+strlen(input_str)))!=ERROR)
             {
-                printf("%d\n",i+1);
-                return well_done();
+                sar=i+1;
+                tedad++;
+                //printf("%d %d %d %d ",mode,sar,tedad,at);
+                if(different_modes(mode,sar,tedad,file,at)==ERROR)
+                    return OK;
             }
         }
     }
-    printf("-1\n");
-    return well_done();
+    sar=-1;
+    different_modes(mode,sar,tedad,file,at);
+        return OK;
 }
