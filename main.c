@@ -38,6 +38,10 @@ int remove_str();
 int copy();
 int cut();
 int paste();
+int find();
+int str_for_find_with_double_quotation(char str[]);
+int get_str_for_find(char str[]);
+int search(char *str1,char *str2,int pos);
 /////////////////////////////////////////MAIN
 int main()
 {
@@ -819,5 +823,268 @@ int paste()
     fprintf(fptr,"%s",clipboard);
     fprintf(fptr,"%s",end_str);
     fclose(fptr);
+    return well_done();
+}
+//////////////////////////////taghyir e raviye
+/////////////////////////////////////////////////////////////////////FIND
+int search(char *str1,char *str2,int pos)
+{
+    if(strlen(str1)==0)
+    {
+        if(str1[1]=='*')
+        {
+            for(int i=0;i<strlen(str2);i++)
+            {
+                if(str2[i]==' ' ||str2[i]=='\n')
+                    return pos+i;
+            }
+            return pos+strlen(str2);
+        }
+        return pos;
+    }
+    int tah;
+    int limit=strlen(str2)-strlen(str1);
+    for(int i=0;i<limit;i++)
+    {
+        if(str2[i]==' ' || str2[i]=='\n')
+        {
+            limit=i;
+            break;
+        }
+    }
+    /////////////
+    for(int i=limit-1;i>=0;i--)
+    {
+        if(strncmp(str1,&str2[i],strlen(str1))==0)
+        {
+            if((tah=search(&str1[strlen(str1)+1],&str2[i+strlen(str1)],pos+i+strlen(str1)))!=ERROR)
+                return tah;
+        }
+    }
+    return ERROR;
+}
+int get_str_for_find(char str[])
+{
+    scanf(" %c",&str[0]);
+    if(str[0]=='"')
+    {
+        if(str_for_find_with_double_quotation(str)==ERROR)
+            return ERROR;
+        return OK;
+    }else
+    {
+        int i=0;
+        if(str[i]=='\\')
+        {
+            i++;
+            str[i]=fgetc(stdin);
+            switch(str[i])
+            {
+                case 'n':
+                    str[i-1]='\n';
+                    break;
+                case '"':
+                    str[i-1]='"';
+                    break;
+                case '\\':
+                    str[i-1]='\\';
+                    break;
+                case '\n':
+                    fseek(stdin,-2,SEEK_END);
+                case '\0':
+                case ' ':
+                    str[i-1]='\\';
+                    str[i]='\0';
+                    str[i+1]='\0';
+                    return OK;
+                case '*':
+                    str[i-1]='*';
+                    break;
+                default :
+                    str[i-1]='\\';
+                    i++;
+                    break;
+            }
+        }else
+            i++;
+        if(str[0]=='*')
+            str[0]=='\0';
+        while(1)
+        {
+            str[i]=fgetc(stdin);
+            switch(str[i])
+            {
+                case '\n':
+                    fseek(stdin,-2,SEEK_END);
+                case '\0':
+                case ' ':
+                    str[i]='\0';
+                    str[i+1]='\0';
+                    return OK;
+                case '*':
+                    str[i]='\0';
+                    break;
+                case '\\':
+                    i++;
+                    str[i]=fgetc(stdin);
+                    switch(str[i])
+                    {
+                        case 'n':
+                            str[i-1]='\n';
+                            break;
+                        case '"':
+                            str[i-1]='"';
+                            break;
+                        case '\\':
+                            str[i-1]='\\';
+                            break;
+                        case '\n':
+                            fseek(stdin,-2,SEEK_END);
+                        case '\0':
+                        case ' ':
+                            str[i-1]='\\';
+                            str[i]='\0';
+                            str[i+1]='\0';
+                            return OK;
+                        case '*':
+                            str[i-1]='*';
+                            break;
+                        default :
+                            str[i-1]='\\';
+                            i++;
+                            break;
+                    }
+                    break;
+                default :
+                    i++;
+                    break;
+            }
+        }
+    }
+}
+int str_for_find_with_double_quotation(char str[])
+{
+    int i=0;
+    while(1)
+    {
+        str[i]=fgetc(stdin);
+        switch(str[i])
+        {
+            case '"':
+                str[i]='\0';
+                str[i+1]='\0';
+                return OK;
+            case '\n':
+                fseek(stdin,-2,SEEK_END);
+            case '\0':
+                str[i]='\0';
+                return ERROR;
+            case '\\':
+                i++;
+                str[i]=fgetc(stdin);
+                switch(str[i])
+                {
+                    case 'n':
+                        str[i-1]='\n';
+                        break;
+                    case '"':
+                        str[i-1]='"';
+                        break;
+                    case '\\':
+                        str[i-1]='\\';
+                        break;
+                    case '\n':
+                        fseek(stdin,-2,SEEK_END);
+                    case '\0':
+                        str[i-1]='\\';
+                        str[i]='\0';
+                        return ERROR;
+                    default :
+                        str[i-1]='\\';
+                        i++;
+                        break;
+                }
+                break;
+            default :
+                i++;
+                break;
+        }
+    }
+}
+int find()
+{
+    char flag[100];
+    char path[100];
+    char input_str[10000];
+    char file[10001];
+    int str_check=0,file_check=0;
+    for(int i=0;i<2;i++)
+    {
+        scanf("%s",flag);
+        if(strcmp(flag,"--file")==0)
+        {
+            if(file_check!=0)
+                return error(*invalid_input);
+            file_check++;
+            if(file_input(path)==ERROR)
+                return error(*invalid_input);
+            if(check_wrong_address(path)==ERROR)
+                return error(*invalid_address);
+            if(check_existance_of_file(path)==ERROR)
+                return error(*no_such_file);
+            continue;
+        }
+        if(strcmp(flag,"--str")==0)
+        {
+            if(str_check!=0)
+                return error(*invalid_input);
+            str_check++;
+            if(get_str_for_find(input_str)==ERROR)
+                return error(*invalid_input);
+            continue;
+        }
+    }
+    FILE* fptr=fopen(path,"r");
+    for(int i=0;fscanf(fptr,"%c",&file[i])!=-1;i++);
+    file[strlen(file)]='\0';
+    /////////////////
+    int tah;
+    int javab;
+    if(input_str[0]=='\0')
+    {
+        if((tah=search(&input_str[1],&file[0],0))!=ERROR)
+        {
+            printf("1\n");
+            return well_done();
+        }
+        for(int i=0;i<strlen(file);i++)
+        {
+            if(file[i]=='\n' || file[i]==' ')
+            {
+                if((tah=search(&input_str[1],&file[i+1],i+1))!=ERROR)
+                {
+                    printf("%d\n",i+2);
+                    return well_done();
+                }
+
+            }
+        }
+        printf("-1\n");
+        return well_done();
+    }
+    ////////
+    int limit=strlen(file)-strlen(input_str);
+    for(int i=0;i<limit;i++)
+    {
+        if(strncmp(input_str,&file[i],strlen(input_str))==0)
+        {
+            if((tah=search(&input_str[strlen(input_str)+1],&file[i+strlen(input_str)],i+strlen(input_str)))!=ERROR)
+            {
+                printf("%d\n",i+1);
+                return well_done();
+            }
+        }
+    }
+    printf("-1\n");
     return well_done();
 }
