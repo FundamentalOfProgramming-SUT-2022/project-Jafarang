@@ -1280,7 +1280,7 @@ int find()
         {
             if(at==-10 && byword==0)
                 mode=1;
-            else if(at==0 && byword==1)
+            else if(at==-10 && byword==1)
                 mode=2;
             else
                 return error(*invalid_input);
@@ -1359,3 +1359,5 @@ int find()
     different_modes(mode,sar,tedad,file,at);
         return OK;
 }
+//////////////////////////////////////////////////////////////REPLACE
+
