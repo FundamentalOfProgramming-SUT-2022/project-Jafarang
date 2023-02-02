@@ -52,6 +52,7 @@ int asle_replace(char path[],int sar,int tah,char replace_str[]);
 int different_modes_for_replace(int mode,int sar,char path[],int at,char replace_str[],int tedad,int tah);
 int start_search_for_replace(char input_str[],char file[],int mode,int at,char replace_str[],char path[]);
 int replace();
+int grep();
 /////////////////////////////////////////MAIN
 int main()
 {
@@ -89,7 +90,8 @@ int main()
     //cat();
     //printf("%s",clipboard);
     //find();
-    replace();
+    //replace();
+    grep();
     //printf("%d",find_start_word("hello\nhello salam",13));
     return 0;
 }
@@ -149,7 +151,9 @@ int get_file(char str[])
         {
             return ERROR;
         }
-    }else
+    }else if(str[0]=='\n')
+        return ERROR;
+    else
     {
         scanf("%s",&str[1]);
         return OK;
@@ -1148,7 +1152,7 @@ int start_search(char input_str[],char file[],int mode,int at)
         }
         sar=-1;
         different_modes(mode,sar,tedad,file,at);
-            return OK;
+            return ERROR;
     }
     ////////
     int limit=strlen(file)-strlen(input_str)+1;
@@ -1176,7 +1180,7 @@ int start_search(char input_str[],char file[],int mode,int at)
     }
     sar=-1;
     different_modes(mode,sar,tedad,file,at);
-        return OK;
+        return ERROR;
 }
 int different_modes(int mode,int sar,int tedad,char str[],int at)
 {
@@ -1261,6 +1265,12 @@ int different_modes(int mode,int sar,int tedad,char str[],int at)
             printf("-1\n");
             return OK;
         }
+    }else
+    {
+        if(sar!=-1)
+            return ERROR;
+        else
+            return OK;
     }
 }
 int find()
@@ -1334,6 +1344,7 @@ int find()
     FILE* fptr=fopen(path,"r");
     for(int i=0;fscanf(fptr,"%c",&file[i])!=-1;i++);
     file[strlen(file)]='\0';
+    fclose(fptr);
     return start_search(input_str,file,mode,at);
 }
 //////////////////////////////////////////////////////////////REPLACE
@@ -1541,5 +1552,162 @@ int replace()
     FILE* fptr=fopen(path,"r");
     for(int i=0;fscanf(fptr,"%c",&file[i])!=-1;i++);
     file[strlen(file)]='\0';
+    fclose(fptr);
     return start_search_for_replace(input_str,file,mode,at,replac_str,path);
+}
+///////////////////////////////////////////////////////////////////GREP
+int get_file_for_grep(char str[])
+{
+    scanf("%c",&str[0]);
+    if(str[0]=='"')
+    {
+        if(str_with_double_quotation(str)==ERROR)
+        {
+            return ERROR;
+        }
+    }else if(str[0]=='\n')
+        return ERROR;
+    else
+    {
+        scanf("%s",&str[1]);
+        return OK;
+    }
+}
+int file_input_for_grep(char str[])
+{
+    if(get_file_for_grep(str)==ERROR)
+        return ERROR;
+    if(str[0]=='/')
+        strcpy(str,&str[1]);
+    if(str[strlen(str)-1]=='/')
+        str[strlen(str)-1]='\0';
+    return OK;
+}
+int grep()
+{
+    char flag[100];
+    char path[20][100];
+    char input_str[10000];
+    char file[10001];
+    int l_option=0,c_option=0;
+    int str_check=0,file_check=0;
+    char c;
+    int tedad_files=0;
+    for(int i=0;i<4;i++)
+    {
+        while((flag[0]=getchar())==' ');
+        if(flag[0]=='\n')
+            break;
+        scanf("%s",&flag[1]);
+        //printf("|%c|",flag[0]);
+        //printf("*");
+        //printf("%s ",flag);
+        if(strcmp(flag,"--files")==0)
+        {
+            //printf("#");
+            if(file_check!=0)
+                return error(*invalid_input);
+            file_check++;
+            for(int i=0;;i++)
+            {
+                //path[i][0]=c;
+                c=getchar();
+                //printf("$%c%d%d$",c,c,'\n');
+                if(c=='\n')
+                {
+                    //printf("@");
+                    tedad_files=i;
+                    break;
+                }
+                if(file_input_for_grep(path[i])==ERROR)
+                {
+                    //printf("#");
+                    if(path[i][0]=='\n')
+                    {
+                        //printf("#");
+                        tedad_files=i;
+                        break;
+                    }else
+                        return error(*invalid_input);
+                }
+                //printf("%s\n",path[i]);
+                if(check_wrong_address(path[i])==ERROR)
+                    return error(*invalid_address);
+                if(check_existance_of_file(path[i])==ERROR)
+                    return error(*no_such_file);
+            }
+            break;
+        }
+        if(strcmp(flag,"--str")==0)
+        {
+            if(str_check!=0)
+                return error(*invalid_input);
+            str_check++;
+            if(get_str_for_find(input_str)==ERROR)
+                return error(*invalid_input);
+            continue;
+        }
+        if(strcmp(flag,"-l")==0)
+        {
+            if(l_option!=0)
+                return error(*invalid_input);
+            l_option++;
+            continue;
+        }
+        if(strcmp(flag,"-c")==0)
+        {
+            if(c_option!=0)
+                return error(*invalid_input);
+            c_option++;
+            continue;
+        }
+    }
+    /////////////////////////
+    int mode;
+    if(l_option==0&&c_option==0)
+        mode=7;
+    else
+    {
+        if(l_option==0)
+            mode=9;
+        else if(c_option==0)
+            mode=8;
+        else
+            return error(*bad_flags);
+    }
+    /////////////
+    int at=-10;
+    FILE* fptr;
+    int tedad_lines=0;
+    for(int i=0;i<tedad_files;i++)
+    {
+        fptr=fopen(path[i],"r");
+        while(fgets(file,10000,fptr)!=NULL)
+        {
+            if(start_search(input_str,file,mode,at)==OK)
+            {
+                tedad_lines++;
+                if(mode==7)
+                {
+                    printf("%s: %s",path[i],file);
+                    if(file[strlen(file)-1]!='\n')
+                    printf("\n");
+                }else if(mode==8)
+                {
+                    printf("%s\n",path[i]);
+                    break;
+                }
+            }
+        }
+        fclose(fptr);
+    }
+    if(tedad_lines==0)
+    {
+        printf("str not found!\n");
+    }
+    if(mode==9)
+    {
+        printf("%d\n",tedad_lines);
+    }
+    return OK;
 }
