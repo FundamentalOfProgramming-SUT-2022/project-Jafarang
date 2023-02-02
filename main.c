@@ -29,6 +29,7 @@ void invalid_input();
 void invalid_address();
 void file_already_existed();
 void out_of_bound();
+void bad_flags();
 //////////////////////////////////////////
 int go_to_address(char path[]);
 int create_file();
@@ -46,6 +47,11 @@ int get_option(int *at,int* count, int* byword, int* all);
 int find_start_word(char str[],int pos);
 int start_search(char input_str[],char file[],int mode,int at);
 int different_modes(int mode,int sar,int tedad,char str[],int at);
+int get_option_for_replace(int* at, int* all);
+int asle_replace(char path[],int sar,int tah,char replace_str[]);
+int different_modes_for_replace(int mode,int sar,char path[],int at,char replace_str[],int tedad,int tah);
+int start_search_for_replace(char input_str[],char file[],int mode,int at,char replace_str[],char path[]);
+int replace();
 /////////////////////////////////////////MAIN
 int main()
 {
@@ -82,7 +88,8 @@ int main()
     //paste();
     //cat();
     //printf("%s",clipboard);
-    find();
+    //find();
+    replace();
     //printf("%d",find_start_word("hello\nhello salam",13));
     return 0;
 }
@@ -126,6 +133,10 @@ void no_such_position()
 void out_of_bound()
 {
     printf("out_of_bound\n");
+}
+void bad_flags()
+{
+    printf("bad flags\n");
 }
 ////////////////////////////////////////////////////////////////GENERAL
 //////////////////////////////////////////input file
@@ -1296,7 +1307,7 @@ int find()
         {
             mode=0;
         }else
-            return error(*invalid_input);
+            return error(*bad_flags);
     }else
     {
         if(all==1)
@@ -1306,7 +1317,7 @@ int find()
             else if(at==-10 && byword==1)
                 mode=2;
             else
-                return error(*invalid_input);
+                return error(*bad_flags);
         }
         else
         {
@@ -1326,3 +1337,209 @@ int find()
     return start_search(input_str,file,mode,at);
 }
 //////////////////////////////////////////////////////////////REPLACE
+int get_option_for_replace(int* at, int* all)
+{
+    char flag[100];
+    char c;
+    while(1)
+    {
+        scanf("%c",&c);
+        if(c==' ')
+            continue;
+        if(c=='\n')
+            return OK;
+        if(c=='-')
+        {
+            scanf("%s",flag);
+            if(strcmp(flag,"at")==0)
+            {
+                if(*at!=-10)
+                    return ERROR;
+                scanf("%d",at);
+                continue;
+            }
+            if(strcmp(flag,"all")==0)
+            {
+                if(*all!=0)
+                    return ERROR;
+                (*all)++;
+                continue;
+            }
+            return error(*invalid_input);
+        }
+    }
+}
+int asle_replace(char path[],int sar,int tah,char replace_str[])
+{
+    char end_str[10001],begining_str[10001];
+    int size=tah-sar;
+    int position=sar-1;
+    get_begining_of_file(path,position,begining_str);
+    get_end_of_file(path,position+size,end_str);
+    rebuild(path,begining_str,replace_str,end_str);
+    ///////
+    return OK;
+}
+int different_modes_for_replace(int mode,int sar,char path[],int at,char replace_str[],int tedad,int tah)
+{
+    if(mode==0)
+    {
+        if(sar!=-1)
+        {
+            asle_replace(path,sar,tah,replace_str);
+            printf("done\n");
+            return ERROR;
+        }else
+        {
+            printf("str1 not found!\n");
+            return OK;
+        }
+    }
+    if(mode==1)
+    {
+        if(sar!=-1)
+        {
+            if(tedad==at)
+            {
+                asle_replace(path,sar,tah,replace_str);
+                printf("done\n");
+                return ERROR;
+            }
+        }else if(sar==-1)
+        {
+            printf("str1 not found!\n");
+        }
+        return OK;
+    }
+    if(mode==2)
+    {
+        if(sar!=-1)
+        {
+            asle_replace(path,sar,tah,replace_str);
+        }else if(tedad==0)
+        {
+            printf("str1 not found!\n");
+        }else
+            printf("done\n");
+        return OK;
+    }
+}
+int start_search_for_replace(char input_str[],char file[],int mode,int at,char replace_str[],char path[])
+{
+    int tah;
+    int sar;
+    int tedad=0;
+    int i=0;
+    if(input_str[0]=='\0')
+    {
+        if((tah=search(&input_str[1],&file[0],0))!=ERROR)
+        {
+            sar=1;
+            tedad++;
+            i=tah;
+            if(different_modes_for_replace(mode,sar,path,at,replace_str,tedad,tah)==ERROR)
+                return OK;
+        }
+        for(;i<strlen(file);i++)
+        {
+            if(file[i]=='\n' || file[i]==' ')
+            {
+                if((tah=search(&input_str[1],&file[i+1],i+1))!=ERROR)
+                {
+                    sar=i+2;
+                    tedad++;
+                    i=tah;
+                    if(different_modes_for_replace(mode,sar,path,at,replace_str,tedad,tah)==ERROR)
+                        return OK;
+                }
+            }
+        }
+        sar=-1;
+        different_modes_for_replace(mode,sar,path,at,replace_str,tedad,tah);
+            return OK;
+    }
+    ////////
+    int limit=strlen(file)-strlen(input_str)+1;
+    for(;i<limit;i++)
+    {
+        if(strncmp(input_str,&file[i],strlen(input_str))==0)
+        {
+            if((tah=search(&input_str[strlen(input_str)+1],&file[i+strlen(input_str)],i+1+strlen(input_str)))!=ERROR)
+            {
+                sar=i+1;
+                tedad++;
+                i=tah;
+                if(different_modes_for_replace(mode,sar,path,at,replace_str,tedad,tah)==ERROR)
+                    return OK;
+            }
+        }
+    }
+    sar=-1;
+    different_modes_for_replace(mode,sar,path,at,replace_str,tedad,tah);
+        return OK;
+}
+int replace()
+{
+    char flag[100];
+    char path[100];
+    char input_str[10000];
+    char replac_str[10000];
+    char file[10001];
+    int at=-10,all=0;
+    int str1_check=0,str2_check=0,file_check=0;
+    for(int i=0;i<3;i++)
+    {
+        scanf("%s",flag);
+        if(strcmp(flag,"--file")==0)
+        {
+            if(file_check!=0)
+                return error(*invalid_input);
+            file_check++;
+            if(file_input(path)==ERROR)
+                return error(*invalid_input);
+            if(check_wrong_address(path)==ERROR)
+                return error(*invalid_address);
+            if(check_existance_of_file(path)==ERROR)
+                return error(*no_such_file);
+            continue;
+        }
+        if(strcmp(flag,"--str1")==0)
+        {
+            if(str1_check!=0)
+                return error(*invalid_input);
+            str1_check++;
+            if(get_str_for_find(input_str)==ERROR)
+                return error(*invalid_input);
+            continue;
+        }
+        if(strcmp(flag,"--str2")==0)
+        {
+            if(str2_check!=0)
+                return error(*invalid_input);
+            str2_check++;
+            if(get_str_for_find(replac_str)==ERROR)
+                return error(*invalid_input);
+            continue;
+        }
+    }
+    ////////////
+    int mode;
+    if(get_option_for_replace(&at,&all)==ERROR)
+       return error(*invalid_input);
+    if(all==0&&at==-10)
+    {
+        mode=0;
+    }else
+    {
+        if(all==0)
+            mode=1;
+        else if(at==-10)
+            mode=2;
+        else
+            return error(*bad_flags);
+    }
+    FILE* fptr=fopen(path,"r");
+    for(int i=0;fscanf(fptr,"%c",&file[i])!=-1;i++);
+    file[strlen(file)]='\0';
+    return start_search_for_replace(input_str,file,mode,at,replac_str,path);
+}
