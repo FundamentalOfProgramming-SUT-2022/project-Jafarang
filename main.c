@@ -44,7 +44,8 @@ int get_str_for_find(char str[]);
 int search(char *str1,char *str2,int pos);
 int get_option(int *at,int* count, int* byword, int* all);
 int find_start_word(char str[],int pos);
-int start_search(char*input_str,char*file,int mod,int*sar, int*tah);
+int start_search(char input_str[],char file[],int mode,int at);
+int different_modes(int mode,int sar,int tedad,char str[],int at);
 /////////////////////////////////////////MAIN
 int main()
 {
@@ -841,11 +842,11 @@ int search(char *str1,char *str2,int pos)
             for(int i=0;i<strlen(str2);i++)
             {
                 if(str2[i]==' ' ||str2[i]=='\n')
-                    return pos+i+1;
+                    return pos+i;
             }
             return pos+strlen(str2);
         }
-        return pos+1;
+        return pos;
     }
     int tah;
     int limit=strlen(str2)-strlen(str1)+1;
@@ -1104,45 +1105,67 @@ int find_start_word(char str[],int pos)
     }
     return word;
 }
-int start_search(char*input_str,char*file,int mode,int*sar, int*tah)
+int start_search(char input_str[],char file[],int mode,int at)
 {
+    int tah;
+    int sar;
     int tedad=0;
+    int i=0;
     if(input_str[0]=='\0')
     {
-        if((*tah=search(&input_str[1],&file[0],0))!=ERROR)
+        if((tah=search(&input_str[1],&file[0],0))!=ERROR)
         {
-            *sar=1;
+            sar=1;
             tedad++;
+            i=tah;
+            if(different_modes(mode,sar,tedad,file,at)==ERROR)
+                return OK;
         }
-        for(int i=0;i<strlen(file);i++)
+        for(;i<strlen(file);i++)
         {
             if(file[i]=='\n' || file[i]==' ')
             {
-                if((*tah=search(&input_str[1],&file[i+1],i+1))!=ERROR)
+                if((tah=search(&input_str[1],&file[i+1],i+1))!=ERROR)
                 {
-                    *sar=i+2;
+                    sar=i+2;
                     tedad++;
+                    i=tah;
+                    if(different_modes(mode,sar,tedad,file,at)==ERROR)
+                        return OK;
                 }
             }
         }
-        *sar=-1;
-        //return;
+        sar=-1;
+        different_modes(mode,sar,tedad,file,at);
+            return OK;
     }
     ////////
     int limit=strlen(file)-strlen(input_str)+1;
-    for(int i=0;i<limit;i++)
+    for(;i<limit;i++)
     {
         if(strncmp(input_str,&file[i],strlen(input_str))==0)
         {
-            if((*tah=search(&input_str[strlen(input_str)+1],&file[i+strlen(input_str)],i+strlen(input_str)))!=ERROR)
+            //printf(" input:%s file:",input_str);
+        //for(int j=0;j<strlen(input_str);j++)
+            //printf("%c",file[i+j]);
+            if((tah=search(&input_str[strlen(input_str)+1],&file[i+strlen(input_str)],i+1+strlen(input_str)))!=ERROR)
             {
-                *sar=i+1;
+                sar=i+1;
                 tedad++;
+                i=tah;
+                //printf("|%d:%d:",sar,tah);
+                //for(int j=sar-1;j<tah-1;j++)
+                 //   printf("%c",file[j]);
+                //printf("\n");
+                //printf("%d %d %d %d ",mode,sar,tedad,at);
+                if(different_modes(mode,sar,tedad,file,at)==ERROR)
+                    return OK;
             }
         }
     }
-    *sar=-1;
-    //return;
+    sar=-1;
+    different_modes(mode,sar,tedad,file,at);
+        return OK;
 }
 int different_modes(int mode,int sar,int tedad,char str[],int at)
 {
@@ -1297,67 +1320,9 @@ int find()
                 mode=6;
         }
     }
-    //printf("mode:%d ",mode);
-    ////////
     FILE* fptr=fopen(path,"r");
     for(int i=0;fscanf(fptr,"%c",&file[i])!=-1;i++);
     file[strlen(file)]='\0';
-    /////////////////
-    /*for(int i=0;i<20;i++)
-    {
-        if(input_str[i]=='\0')
-            printf("-");
-        else
-            printf("%c",input_str[i]);
-    }*/
-    int tah;
-    int sar;
-    int tedad=0;
-    if(input_str[0]=='\0')
-    {
-        if((tah=search(&input_str[1],&file[0],0))!=ERROR)
-        {
-            sar=1;
-            tedad++;
-            if(different_modes(mode,sar,tedad,file,at)==ERROR)
-                return OK;
-        }
-        for(int i=0;i<strlen(file);i++)
-        {
-            if(file[i]=='\n' || file[i]==' ')
-            {
-                if((tah=search(&input_str[1],&file[i+1],i+1))!=ERROR)
-                {
-                    sar=i+2;
-                    tedad++;
-                    if(different_modes(mode,sar,tedad,file,at)==ERROR)
-                        return OK;
-                }
-            }
-        }
-        sar=-1;
-        different_modes(mode,sar,tedad,file,at);
-            return OK;
-    }
-    ////////
-    int limit=strlen(file)-strlen(input_str)+1;
-    for(int i=0;i<limit;i++)
-    {
-        if(strncmp(input_str,&file[i],strlen(input_str))==0)
-        {
-            if((tah=search(&input_str[strlen(input_str)+1],&file[i+strlen(input_str)],i+strlen(input_str)))!=ERROR)
-            {
-                sar=i+1;
-                tedad++;
-                //printf("%d %d %d %d ",mode,sar,tedad,at);
-                if(different_modes(mode,sar,tedad,file,at)==ERROR)
-                    return OK;
-            }
-        }
-    }
-    sar=-1;
-    different_modes(mode,sar,tedad,file,at);
-        return OK;
+    return start_search(input_str,file,mode,at);
 }
 //////////////////////////////////////////////////////////////REPLACE
-
