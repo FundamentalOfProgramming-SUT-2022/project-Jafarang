@@ -53,6 +53,9 @@ int different_modes_for_replace(int mode,int sar,char path[],int at,char replace
 int start_search_for_replace(char input_str[],char file[],int mode,int at,char replace_str[],char path[]);
 int replace();
 int grep();
+int asle_auto_indent(char file[],int sar,int tah,int indent);
+int pair_up(char file[],int pos,int indent);
+int auto_indent();
 /////////////////////////////////////////MAIN
 int main()
 {
@@ -91,7 +94,8 @@ int main()
     //printf("%s",clipboard);
     //find();
     //replace();
-    grep();
+    //grep();
+    auto_indent();
     //printf("%d",find_start_word("hello\nhello salam",13));
     return 0;
 }
@@ -1709,5 +1713,166 @@ int grep()
     {
         printf("%d\n",tedad_lines);
     }
+    return OK;
+}
+////////////////////////////////////////////////////////////////////////CLOSING PAIRS
+int asle_auto_indent(char file[],int sar,int tah,int indent)
+{
+    //printf("%d ",indent);
+    char sar_file[10000],vasat_file[10000],tah_file[10000];
+    if(sar==0)
+        sar_file[0]='\0';
+    else
+        strncpy(sar_file,file,sar);
+    strcpy(tah_file,&file[tah+1]);
+    ///////////////
+    int pos=0;
+    if(!(sar==0||file[sar-1]==' '||file[sar-1]=='\n'))
+    {
+        vasat_file[pos]=' ';
+        pos++;
+    }
+    vasat_file[pos]='{';
+    vasat_file[pos+1]='\n';
+    pos+=2;
+    for(int i=sar+1;i<tah;i++)
+    {
+        if(indent>0)
+        {
+            for(int j=0;j<indent;j++)
+            {
+                vasat_file[pos]=' ';
+                pos++;
+            }
+            for(;file[i]==' ';i++);
+            if(i==tah)
+            {
+                pos-=4;
+            }
+        }
+        while(i<tah)
+        {
+            vasat_file[pos]=file[i];
+            pos++;
+            if(file[i]=='\n')
+            {
+                break;
+            }
+            if(file[i]=='{')
+            {
+                indent-=100000;
+            }
+            if(file[i]=='}')
+            {
+                indent+=100000;
+            }
+            i++;
+        }
+    }
+    if(vasat_file[pos-1]!='\n'&&vasat_file[pos-1]!=' ')
+    {
+        vasat_file[pos]='\n';
+        pos++;
+        for(int j=0;j<indent-4;j++)
+        {
+            vasat_file[pos]=' ';
+            pos++;
+        }
+    }
+    vasat_file[pos]='}';
+    pos++;
+    if(file[tah+1]!='\n'&&file[tah+1]!='\0')
+    {
+        vasat_file[pos]='\n';
+        pos++;
+    }
+    vasat_file[pos]='\0';
+    ////////////
+    strcpy(file,sar_file);
+    strcat(file,vasat_file);
+    strcat(file,tah_file);
+    //printf("%s\n///%c///\n",file,file[sar+strlen(vasat_file)-2]);
+    return sar+strlen(vasat_file)-2;
+}
+int pair_up(char file[],int pos,int indent)
+{
+    //printf("%d ",indent);
+    int last_n=pos;
+    int new_indent=0;
+    int sar=pos;
+    for(int i=pos+1;i!=-1;i++)
+    {
+        //printf("#%c",file[i]);
+        switch(file[i])
+        {
+            case '{':
+                i=pair_up(file,i,indent+new_indent+4);
+                break;
+            case '}':
+                return(i=asle_auto_indent(file,sar,i,indent+4));
+            case '\0':
+                return -2;
+            case '\n':
+                last_n=i;
+                new_indent=0;
+                break;
+            case ' ':
+                for(;file[i+1]==' ';i++);
+                if(file[i+1]!='{')
+                    new_indent=i-last_n;
+                break;
+        }
+    }
+}
+int auto_indent()
+{
+    char path[100];
+    char file[10000];
+    char flag[50];
+    scanf("%s",flag);
+    if(strcmp(flag,"--file"))
+        return error(*invalid_input);
+    if(file_input(path)==ERROR)
+        return error(*invalid_input);
+    if(check_wrong_address(path)==ERROR)
+        return error(*invalid_address);
+    if(check_existance_of_file(path)==ERROR)
+        return error(*no_such_file);
+    ///////////////
+    FILE*fptr=fopen(path,"r");
+    int iiii=0;
+    for(;fscanf(fptr,"%c",&file[iiii])!=-1;iiii++);
+    file[iiii]='\0';
+    fclose(fptr);
+    /////////
+    int last_n=0;
+    int indent=0;
+    for(int i=0;i!=-1;i++)
+    {
+        //printf("%d ",indent);
+        switch(file[i])
+        {
+            case '\n':
+                last_n=i;
+                indent=0;
+                break;
+            case ' ':
+                for(;file[i+1]==' ';i++);
+                if(file[i+1]!='{')
+                    indent=i-last_n;
+                break;
+            case '\0':
+                i=-2;
+                break;
+            case '{':
+                //printf("%d ",indent);
+                i=pair_up(file,i,indent);
+                break;
+        }
+    }
+    //printf("%s",file);
+    fptr=fopen(path,"w");
+    fprintf(fptr,"%s",file);
+    fclose(fptr);
     return OK;
 }
