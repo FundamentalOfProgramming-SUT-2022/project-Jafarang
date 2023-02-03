@@ -30,6 +30,7 @@ void invalid_address();
 void file_already_existed();
 void out_of_bound();
 void bad_flags();
+void invalid_depth();
 //////////////////////////////////////////
 int go_to_address(char path[]);
 int create_file();
@@ -64,44 +65,83 @@ int main()
 {
     clipboard[0]='\0';
     char command[30];
-    //create_file();
-    //get_str(command);
-    //printf("%s",command);
-    //insert();
-    //cat();
-    //remove_str();
-    //char path[]={"root/test.txt"};
-    //get_end_of_file(path,5,command);
-    /*get_str(command);
-    FILE*fptr=fopen("root/test.txt","w");
-    fprintf(fptr,"%s",command);
-    fclose(fptr);
-    char c;
-    fptr=fopen("root/test.txt","r");
-    for(int i=0;i<strlen(command);i++)
+    while(1)
     {
-        //fseek(fptr,i,SEEK_SET);
-        fscanf(fptr,"%c",&c);
-        printf("*%c%d",c,c);
+        scanf("%s",command);
+        if(strcmp(command,"createfile")==0)
+        {
+            create_file();
+            continue;
+        }
+        if(strcmp(command,"insertstr")==0)
+        {
+            insert();
+            continue;
+        }
+        if(strcmp(command,"cat")==0)
+        {
+            cat();
+            continue;
+        }
+        if(strcmp(command,"removestr")==0)
+        {
+            remove_str();
+            continue;
+        }
+        if(strcmp(command,"copystr")==0)
+        {
+            copy();
+            continue;
+        }
+        if(strcmp(command,"cutstr")==0)
+        {
+            cut();
+            continue;
+        }
+        if(strcmp(command,"pastestr")==0)
+        {
+            paste();
+            continue;
+        }
+        if(strcmp(command,"find")==0)
+        {
+            find();
+            continue;
+        }
+        if(strcmp(command,"replace")==0)
+        {
+            replace();
+            continue;
+        }
+        if(strcmp(command,"grep")==0)
+        {
+            grep();
+            continue;
+        }
+        if(strcmp(command,"auto_indent")==0)
+        {
+            auto_indent();
+            continue;
+        }
+        if(strcmp(command,"compare")==0)
+        {
+            compare();
+            continue;
+        }
+        if(strcmp(command,"tree")==0)
+        {
+            tree();
+            continue;
+        }
+        if(strcmp(command,"exit")==0)
+        {
+            return 0;
+        }else
+        {
+            error(*invalid_input);
+            continue;
+        }
     }
-    fclose(fptr);*/
-    /*get_end_of_file("root/test.txt",8,command);
-    for(int i=0;i<strlen(command);i++)
-    {
-        printf("*%c",command[i]);
-    }*/
-    //printf("%s",command);
-    //copy();
-    //paste();
-    //cat();
-    //printf("%s",clipboard);
-    //find();
-    //replace();
-    //grep();
-    //auto_indent();
-    //compare();
-    tree();
-    //printf("%d",find_start_word("hello\nhello salam",13));
     return 0;
 }
 ////////////////////////////////////////
@@ -148,6 +188,10 @@ void out_of_bound()
 void bad_flags()
 {
     printf("bad flags\n");
+}
+void invalid_depth()
+{
+    printf("invalid depth\n");
 }
 ////////////////////////////////////////////////////////////////GENERAL
 //////////////////////////////////////////input file
@@ -515,6 +559,7 @@ int create_file()
     ///////
     fptr=fopen(path,"w");
     fclose(fptr);
+    printf("done\n");
     return well_done();
 }
 //////////////////////////////////////////////////////INSERT
@@ -572,6 +617,7 @@ int insert()
     fprintf(fptr,"%s",end_str);
     //printf("%s",input_str);
     fclose(fptr);
+    printf("done\n");
     return well_done();
 }
 ///////////////////////////////////////////////////////CAT
@@ -668,6 +714,7 @@ int remove_str()
     get_begining_of_file(path,position,begining_str);
     get_end_of_file(path,position+size,end_str);
     rebuild(path,begining_str,middle,end_str);
+    printf("done\n");
     return well_done();
 }
 ////////////////////////////////////////////////////////COPY
@@ -735,6 +782,7 @@ int copy()
         return error(*out_of_bound);
     //////////
     get_str_from_file(path,position,size,clipboard);
+    printf("done\n");
     return well_done();
 }
 ////////////////////////////////////////////////////////////////////CUT
@@ -807,6 +855,7 @@ int cut()
     get_begining_of_file(path,position,begining_str);
     get_end_of_file(path,position+size,end_str);
     rebuild(path,begining_str,middle,end_str);
+    printf("done\n");
     return well_done();
 }
 /////////////////////////////////////////////////////////////PASTE
@@ -853,6 +902,7 @@ int paste()
     fprintf(fptr,"%s",clipboard);
     fprintf(fptr,"%s",end_str);
     fclose(fptr);
+    printf("done\n");
     return well_done();
 }
 //////////////////////////////taghyir e raviye
@@ -1879,7 +1929,8 @@ int auto_indent()
     fptr=fopen(path,"w");
     fprintf(fptr,"%s",file);
     fclose(fptr);
-    return OK;
+    printf("done\n");
+    return well_done();
 }
 /////////////////////////////////////////////////////////////////////TEXT COMPARATOR
 int compare()
@@ -2003,7 +2054,7 @@ int tree()
     int depth;
     scanf("%d",&depth);
     if(depth<-1)
-        error(*invalid_input);
+        return error(*invalid_depth);
     char path[10000]={"root"};
     if(depth==-1)
         depth=10000;
