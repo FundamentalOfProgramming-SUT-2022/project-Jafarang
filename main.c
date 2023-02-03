@@ -1,7 +1,7 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<string.h>
-#include<direct.h>
+#include<dirent.h>
 
 #define ERROR -100
 #define OK 100
@@ -57,6 +57,8 @@ int asle_auto_indent(char file[],int sar,int tah,int indent);
 int pair_up(char file[],int pos,int indent);
 int auto_indent();
 int compare();
+int asle_tree(char path[],int depth,int limit);
+int tree();
 /////////////////////////////////////////MAIN
 int main()
 {
@@ -97,7 +99,8 @@ int main()
     //replace();
     //grep();
     //auto_indent();
-    compare();
+    //compare();
+    tree();
     //printf("%d",find_start_word("hello\nhello salam",13));
     return 0;
 }
@@ -1963,4 +1966,51 @@ int compare()
         }
     }
 }
-////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////TREE
+int asle_tree(char path[],int depth,int limit)
+{
+    struct dirent *files;
+    DIR *dr = opendir(path);
+    if (dr == NULL)
+    {
+        //printf("DALI");
+        return ERROR;
+    }
+    while ((files = readdir(dr)) != NULL)
+    {
+
+        if(files->d_name[0]!='.')
+        {
+            for(int i=0;i<depth-1;i++)
+                printf("   ");
+            printf("\\___");
+            printf("%s\n", files->d_name);
+            if(depth+1<=limit)
+            {
+                char new_path[100];
+                strcpy(new_path,path);
+                strcat(new_path,"/");
+                strcat(new_path,files->d_name);
+                asle_tree(new_path,depth+1,limit);
+            }
+        }
+    }
+    closedir(dr);
+    return OK;
+}
+int tree()
+{
+    int depth;
+    scanf("%d",&depth);
+    if(depth<-1)
+        error(*invalid_input);
+    char path[10000]={"root"};
+    if(depth==-1)
+        depth=10000;
+    printf("root\n");
+    ////////////////
+    asle_tree(path,0,depth);
+    return OK;
+}
+/////////////////////////////////////////////////////////////////
+
