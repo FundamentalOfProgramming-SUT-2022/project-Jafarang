@@ -56,6 +56,7 @@ int grep();
 int asle_auto_indent(char file[],int sar,int tah,int indent);
 int pair_up(char file[],int pos,int indent);
 int auto_indent();
+int compare();
 /////////////////////////////////////////MAIN
 int main()
 {
@@ -95,7 +96,8 @@ int main()
     //find();
     //replace();
     //grep();
-    auto_indent();
+    //auto_indent();
+    compare();
     //printf("%d",find_start_word("hello\nhello salam",13));
     return 0;
 }
@@ -1876,3 +1878,89 @@ int auto_indent()
     fclose(fptr);
     return OK;
 }
+/////////////////////////////////////////////////////////////////////TEXT COMPARATOR
+int compare()
+{
+    char flag[100];
+    char path[2][100];
+    char line1[10000];
+    char line2[10000];
+    int file_check=0;
+    char c;
+    for(int i=0;i<2;i++)
+    {
+        c=getchar();
+        if(c=='\n')
+        {
+            return error(*invalid_input);
+        }
+        if(file_input_for_grep(path[i])==ERROR)
+        {
+            return error(*invalid_input);
+        }
+        if(check_wrong_address(path[i])==ERROR)
+            return error(*invalid_address);
+        if(check_existance_of_file(path[i])==ERROR)
+            return error(*no_such_file);
+    }
+    //////////////////////////////
+    FILE*fptr1,*fptr2;
+    fptr1=fopen(path[0],"r");
+    fptr2=fopen(path[1],"r");
+    int tafavot=0;
+    for(int i=1;;i++)
+    {
+        if(fgets(line1,10000,fptr1)==NULL)
+        {
+            if(fgets(line2,10000,fptr2)!=NULL)
+            {
+                printf(">>>>>>>>>>>> #%d - file 2 >>>>>>>>>>>>\n",i);
+                while(1)
+                {
+                    printf("%s",line2);
+                    if(fgets(line2,10000,fptr2)==NULL)
+                    {
+                        break;
+                    }
+                }
+                printf("\n");
+            }
+            fclose(fptr1);
+            fclose(fptr2);
+            if(tafavot==0)
+                printf("are the same\n");
+            return well_done();
+        }else if(fgets(line2,10000,fptr2)==NULL)
+        {
+            if(fgets(line1,10000,fptr1)!=NULL)
+            {
+                printf(">>>>>>>>>>>> #%d - file 1 >>>>>>>>>>>>\n",i);
+                while(1)
+                {
+                    printf("%s",line1);
+                    if(fgets(line1,10000,fptr1)==NULL)
+                    {
+                        break;
+                    }
+                }
+                printf("\n");
+            }
+            fclose(fptr1);
+            fclose(fptr2);
+            if(tafavot==0)
+                printf("are the same\n");
+            return well_done();
+        }
+        if(strcmp(line1,line2)!=0)
+        {
+            tafavot++;
+            printf("============ #%d ============\n%s",i,line1);
+            if(line1[strlen(line1)-1]!='\n')
+                printf("\n");
+            printf("%s",line2);
+            if(line2[strlen(line2)-1]!='\n')
+                printf("\n");
+        }
+    }
+}
+////////////////////////////////////////////////////////
