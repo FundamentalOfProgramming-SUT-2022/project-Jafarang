@@ -60,6 +60,7 @@ int auto_indent();
 int compare();
 int asle_tree(char path[],int depth,int limit);
 int tree();
+int undo();
 /////////////////////////////////////////MAIN
 int main()
 {
@@ -91,6 +92,11 @@ int main()
         if(strcmp(command,"copystr")==0)
         {
             copy();
+            continue;
+        }
+        if(strcmp(command,"undo")==0)
+        {
+            undo();
             continue;
         }
         if(strcmp(command,"cutstr")==0)
@@ -513,7 +519,7 @@ int go_to_address(char path[])
     {
         if(path[i]=='/')
         {
-            if(strcmp(path2,"root"))
+            if(strncmp(path2,"root",4))
             {
                 return ERROR;
             }
@@ -549,6 +555,10 @@ int create_file()
         return error(*invalid_input);
     if(go_to_address(path)==ERROR)
         return error(*invalid_address);
+    char path2[100];
+    strcpy(path2,path);
+    path2[3]='z';
+    go_to_address(path2);
     ////////
     FILE* fptr;
     if((fptr=fopen(path,"r"))!=NULL)
@@ -558,6 +568,8 @@ int create_file()
     }
     ///////
     fptr=fopen(path,"w");
+    fclose(fptr);
+    fptr=fopen(path2,"w");
     fclose(fptr);
     printf("done\n");
     return well_done();
@@ -608,6 +620,20 @@ int insert()
         }
     }
     /////////////////
+    char path2[100];
+    char c;
+    strcpy(path2,path);
+    path2[3]='z';
+    FILE*fptr1,*fptr2;
+    fptr2=fopen(path2,"w");
+    fptr1=fopen(path,"r");
+    while((c=fgetc(fptr1))!=-1)
+    {
+        fprintf(fptr2,"%c",c);
+    }
+    fclose(fptr1);
+    fclose(fptr2);
+    /////////////////////
     char end_str[10001];
     int real_position=find_real_position(path,position);
     get_end_of_file(path,position,end_str);
@@ -709,6 +735,20 @@ int remove_str()
     if((position=check_position(path,sign,size,position))==ERROR)
         return error(*out_of_bound);
     ////////
+    char path2[100];
+    char c;
+    strcpy(path2,path);
+    path2[3]='z';
+    FILE*fptr1,*fptr2;
+    fptr2=fopen(path2,"w");
+    fptr1=fopen(path,"r");
+    while((c=fgetc(fptr1))!=-1)
+    {
+        fprintf(fptr2,"%c",c);
+    }
+    fclose(fptr1);
+    fclose(fptr2);
+    /////////////////////
     char end_str[10001],begining_str[10001],middle[1];
     strcpy(middle,"");
     get_begining_of_file(path,position,begining_str);
@@ -849,6 +889,20 @@ int cut()
     if((position=check_position(path,sign,size,position))==ERROR)
         return error(*out_of_bound);
     /////////////////
+    char path2[100];
+    char c;
+    strcpy(path2,path);
+    path2[3]='z';
+    FILE*fptr1,*fptr2;
+    fptr2=fopen(path2,"w");
+    fptr1=fopen(path,"r");
+    while((c=fgetc(fptr1))!=-1)
+    {
+        fprintf(fptr2,"%c",c);
+    }
+    fclose(fptr1);
+    fclose(fptr2);
+    /////////////////////
     get_str_from_file(path,position,size,clipboard);
     char end_str[10001],begining_str[10001],middle[1];
     strcpy(middle,"");
@@ -894,6 +948,20 @@ int paste()
         }
     }
     /////////////////
+    char path2[100];
+    char c;
+    strcpy(path2,path);
+    path2[3]='z';
+    FILE*fptr1,*fptr2;
+    fptr2=fopen(path2,"w");
+    fptr1=fopen(path,"r");
+    while((c=fgetc(fptr1))!=-1)
+    {
+        fprintf(fptr2,"%c",c);
+    }
+    fclose(fptr1);
+    fclose(fptr2);
+    /////////////////////
     char end_str[10001];
     int real_position=find_real_position(path,position);
     get_end_of_file(path,position,end_str);
@@ -1608,6 +1676,21 @@ int replace()
         else
             return error(*bad_flags);
     }
+    /////////////////////
+    char path2[100];
+    char c;
+    strcpy(path2,path);
+    path2[3]='z';
+    FILE*fptr1,*fptr2;
+    fptr2=fopen(path2,"w");
+    fptr1=fopen(path,"r");
+    while((c=fgetc(fptr1))!=-1)
+    {
+        fprintf(fptr2,"%c",c);
+    }
+    fclose(fptr1);
+    fclose(fptr2);
+    /////////////////////
     FILE* fptr=fopen(path,"r");
     for(int i=0;fscanf(fptr,"%c",&file[i])!=-1;i++);
     file[strlen(file)]='\0';
@@ -1894,6 +1977,20 @@ int auto_indent()
     if(check_existance_of_file(path)==ERROR)
         return error(*no_such_file);
     ///////////////
+    char path2[100];
+    char c;
+    strcpy(path2,path);
+    path2[3]='z';
+    FILE*fptr1,*fptr2;
+    fptr2=fopen(path2,"w");
+    fptr1=fopen(path,"r");
+    while((c=fgetc(fptr1))!=-1)
+    {
+        fprintf(fptr2,"%c",c);
+    }
+    fclose(fptr1);
+    fclose(fptr2);
+    /////////////////////
     FILE*fptr=fopen(path,"r");
     int iiii=0;
     for(;fscanf(fptr,"%c",&file[iiii])!=-1;iiii++);
@@ -2063,5 +2160,53 @@ int tree()
     asle_tree(path,0,depth);
     return OK;
 }
-/////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////UNDO
+int undo()
+{
+    char path[100];
+    char path2[100];
+    char file[10000];
+    char flag[50];
+    char c;
+    scanf("%s",flag);
+    if(strcmp(flag,"--file"))
+        return error(*invalid_input);
+    if(file_input(path)==ERROR)
+        return error(*invalid_input);
+    strcpy(path2,path);
+    path2[3]='z';
+    if(check_wrong_address(path)==ERROR)
+        return error(*invalid_address);
+    if(check_existance_of_file(path)==ERROR)
+    {
+        return error(*no_such_file);
+        /*if(check_existance_of_file(path2)==ERROR)
+            return error(*no_such_file);
+        go_to_address(path);
+        FILE*fptr=fopen(path,"w");
+        fclose(fptr);*/
+    }
+    //////////////////////////
+    FILE*fptr1,*fptr2;
+    fptr1=fopen(path,"r");
+    for(int i=0;(c=fgetc(fptr1))!=-1;i++)
+    {
+        file[i]=c;
+        file[i+1]='\0';
+    }
+    fclose(fptr1);
+    fptr1=fopen(path,"w");
+    fptr2=fopen(path2,"r");
+    while((c=fgetc(fptr2))!=-1)
+    {
+        fprintf(fptr1,"%c",c);
+    }
+    fclose(fptr2);
+    fclose(fptr1);
+    fptr2=fopen(path2,"w");
+    fprintf(fptr2,"%s",file);
+    fclose(fptr2);
+    printf("done\n");
+    return OK;
+}
 
