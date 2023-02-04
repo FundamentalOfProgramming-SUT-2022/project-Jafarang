@@ -7,7 +7,7 @@
 #define OK 100
 #define WRONG 0
 
-char clipboard[10001];
+char *clipboard;
 
 int get_file(char str[]);
 int file_input(char str[]);
@@ -64,6 +64,7 @@ int undo();
 /////////////////////////////////////////MAIN
 int main()
 {
+    clipboard=(char*)malloc(sizeof(char));
     clipboard[0]='\0';
     char command[30];
     while(1)
@@ -821,6 +822,8 @@ int copy()
     if((position=check_position(path,sign,size,position))==ERROR)
         return error(*out_of_bound);
     //////////
+    free(clipboard);
+    clipboard=(char *)malloc((size+10)*sizeof(char));
     get_str_from_file(path,position,size,clipboard);
     printf("done\n");
     return well_done();
@@ -903,6 +906,8 @@ int cut()
     fclose(fptr1);
     fclose(fptr2);
     /////////////////////
+    free(clipboard);
+    clipboard=(char *)malloc((size+10)*sizeof(char));
     get_str_from_file(path,position,size,clipboard);
     char end_str[10001],begining_str[10001],middle[1];
     strcpy(middle,"");
