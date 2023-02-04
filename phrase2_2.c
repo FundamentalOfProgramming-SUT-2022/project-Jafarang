@@ -13,8 +13,6 @@ int num_of_lines=0;
 int mode=0;
 int not_saved=0;
 int first_line=0;
-int cur_x=1;
-int cur_y=1;
 
 
 int vim();
@@ -23,6 +21,7 @@ void refresh_file(char path[]);
 void layout();
 void print_line(int line);
 void refresh_screen();
+void visual_mode();
 
 
 int main()
@@ -50,11 +49,10 @@ int vim()
     mode=0;
     not_saved=0;
     first_line=0;
-    cur_x=1;
-    cur_y=1;
     ///////////////////////////////
     refresh_file(path);
     refresh_screen();
+    visual_mode();
     getch(); //
 }
 void get_file_name(char path[])
@@ -117,7 +115,11 @@ void layout()
 }
 void print_line(int line)
 {
-    printf("%d    ",line+1);
+    printf("%d  ",line+1);
+    if(line+1<10)
+        printf("  ");
+    else if(line+1<100)
+        printf(" ");
     for(int i=start_lines[line]+1;i<start_lines[line+1];i++)
     {
         printf("%c",file[i]);
@@ -141,3 +143,101 @@ void refresh_screen()
     }
     gotoxy(1,1);
 }
+/////////////////////////////////
+void normal_mode()
+{
+    gotoxy(1,29);
+}
+/////////////////////////////////
+void visual_mode()
+{
+    int cur_x=1;
+    int cur_y=1;
+    int scr_x=cur_x+5;
+    int scr_y=cur_y-first_line;
+    int cur_pos=0;
+    char c;
+    gotoxy(scr_x,scr_y);
+    while(1)
+    {
+        if(kbhit())
+        {
+            c=getch();
+            switch(c)
+            {
+                case 'h':
+                    if (cur_x>1)
+                    {
+                        cur_x--;
+                        scr_x--;
+                        gotoxy(scr_x,scr_y);
+                        cur_pos--;
+                    }
+                    break;
+                case 'l':
+                    if(cur_x<start_lines[cur_y]-start_lines[cur_y-1]-1)
+                    {
+                        cur_x++;
+                        scr_x++;
+                        gotoxy(scr_x,scr_y);
+                        cur_pos++;
+                    }
+                    break;
+                case 'j':
+                    if(first_line>1&&scr_y<5)
+                    {
+                        first_line--;
+                        refresh_screen();
+                        if(cur_x>start_lines[cur_y-1]-start_lines[cur_y-2]-1)
+                        {
+                            cur_x=start_lines[cur_y-1]-start_lines[cur_y-2]-1;
+                            scr_x=cur_x+5;
+                        }
+                        cur_y--;
+                        gotoxy(scr_x,scr_y);
+                        cur_pos=start_lines[cur_y-1]+cur_x;
+                    }else if(cur_y>1)
+                    {
+                        if(cur_x>start_lines[cur_y-1]-start_lines[cur_y-2]-1)
+                        {
+                            cur_x=start_lines[cur_y-1]-start_lines[cur_y-2]-1;
+                            scr_x=cur_x+5;
+                        }
+                        cur_y--;
+                        scr_y--;
+                        gotoxy(scr_x,scr_y);
+                        cur_pos=start_lines[cur_y-1]+cur_x;
+                    }
+                    break;
+                case 'k':
+                    if(scr_y>23&&cur_y<num_of_lines)
+                    {
+                        first_line++;
+                        refresh_screen();
+                        if(cur_x>start_lines[cur_y+1]-start_lines[cur_y]-1)
+                        {
+                            cur_x=start_lines[cur_y+1]-start_lines[cur_y]-1;
+                            scr_x=cur_x+5;
+                        }
+                        cur_y++;
+                        gotoxy(scr_x,scr_y);
+                        cur_pos=start_lines[cur_y+1]+cur_x;
+                    }else if(cur_y<num_of_lines)
+                    {
+                        if(cur_x>start_lines[cur_y+1]-start_lines[cur_y]-1)
+                        {
+                            cur_x=start_lines[cur_y+1]-start_lines[cur_y]-1;
+                            scr_x=cur_x+5;
+                        }
+                        cur_y++;
+                        scr_y++;
+                        gotoxy(scr_x,scr_y);
+                        cur_pos=start_lines[cur_y+1]+cur_x;
+                    }
+                    break;
+            }
+        }
+    }
+}
+
+
